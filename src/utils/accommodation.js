@@ -1,4 +1,5 @@
 export const CHECKOUT_STORAGE_KEY = 'alojamiento-checkout-draft'
+export const PUBLIC_SEARCH_STORAGE_KEY = 'alojamiento-public-search'
 
 export const getValue = (source, keys, fallback = undefined) => {
   for (const key of keys) {
@@ -27,6 +28,57 @@ export const getNights = (fechaInicio, fechaFin) => {
   const end = new Date(`${fechaFin}T00:00:00`)
   const diff = Math.ceil((end - start) / 86400000)
   return diff > 0 ? diff : 0
+}
+
+const toDateInputValue = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export const addDays = (dateValue, days) => {
+  const base = new Date(`${dateValue}T00:00:00`)
+  base.setDate(base.getDate() + days)
+  return toDateInputValue(base)
+}
+
+export const getDefaultDateRange = () => {
+  const todayDate = new Date()
+  const checkIn = toDateInputValue(todayDate)
+  const checkOut = addDays(checkIn, 1)
+  return { fechaInicio: checkIn, fechaFin: checkOut }
+}
+
+export const hydrateSearchDates = (search = {}) => {
+  const defaults = getDefaultDateRange()
+  const fechaInicio = search.fechaInicio || defaults.fechaInicio
+  let fechaFin = search.fechaFin || defaults.fechaFin
+  if (fechaFin <= fechaInicio) fechaFin = addDays(fechaInicio, 1)
+  return { ...search, fechaInicio, fechaFin }
+}
+
+export const loadStoredSearch = () => {
+  if (typeof window === 'undefined') return {}
+  const fromSession = window.sessionStorage.getItem(PUBLIC_SEARCH_STORAGE_KEY)
+  const fromLocal = window.localStorage.getItem(PUBLIC_SEARCH_STORAGE_KEY)
+  const raw = fromSession || fromLocal
+  if (!raw) return {}
+
+  try {
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+export const persistSearchState = (search = {}) => {
+  if (typeof window === 'undefined') return
+  const normalized = hydrateSearchDates(search)
+  const payload = JSON.stringify(normalized)
+  window.sessionStorage.setItem(PUBLIC_SEARCH_STORAGE_KEY, payload)
+  window.localStorage.setItem(PUBLIC_SEARCH_STORAGE_KEY, payload)
 }
 
 export const getAccommodationGuid = (item) =>

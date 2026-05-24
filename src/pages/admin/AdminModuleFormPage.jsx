@@ -147,7 +147,7 @@ export default function AdminModuleFormPage() {
   }
 
   const renderField = (field) => {
-    const controlClass = 'rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-900/40'
+    const controlClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-900/40'
     if (field.type === 'select') {
       return (
         <select name={field.name} required={field.required} value={form[field.name] ?? ''} onChange={updateForm} className={controlClass}>
@@ -198,6 +198,19 @@ export default function AdminModuleFormPage() {
             />
           )}
         </div>
+      )
+    }
+
+    if (field.type === 'textarea') {
+      return (
+        <textarea
+          name={field.name}
+          required={field.required}
+          value={form[field.name] ?? ''}
+          onChange={updateForm}
+          rows={5}
+          className={`${controlClass} min-h-32 resize-y leading-relaxed`}
+        />
       )
     }
 
@@ -354,9 +367,9 @@ export default function AdminModuleFormPage() {
         <div className="rounded-lg bg-white p-8 text-center text-slate-500 dark:bg-slate-900">Cargando registro...</div>
       ) : (
         <form onSubmit={submit} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {visibleFields.map((field) => (
-              <label key={field.name} className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
+              <label key={field.name} className={`flex flex-col gap-1.5 text-sm text-slate-700 dark:text-slate-200 ${field.layout === 'wide' ? 'md:col-span-2 xl:col-span-3' : ''}`}>
                 <span className="font-medium text-slate-800 dark:text-slate-100">{getFieldLabel(field)}</span>
                 {renderField(field)}
               </label>

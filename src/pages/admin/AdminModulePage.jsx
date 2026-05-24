@@ -59,6 +59,45 @@ const formatDate = (value) => {
 const fieldValue = (row, key, fallback = '') => readValue(row, key) || fallback
 const normalizeState = (value) => String(value ?? '').trim().toUpperCase()
 
+const getImageUrls = (row) => {
+  const images = asArray(row?.imagenes ?? row?.Imagenes)
+  const urlsFromCollection = images
+    .map((image) => image?.urlImagen ?? image?.UrlImagen ?? image?.url ?? image?.Url ?? '')
+    .filter(Boolean)
+
+  const principal = readValue(row, 'imagenPrincipalUrl')
+  const merged = principal ? [principal, ...urlsFromCollection] : urlsFromCollection
+  return [...new Set(merged)]
+}
+
+function ImageCellCarousel({ row }) {
+  const urls = getImageUrls(row)
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    setIndex(0)
+  }, [row])
+
+  if (urls.length === 0) return <span className="text-xs text-slate-500">Sin imagen</span>
+  if (urls.length === 1) return <img src={urls[0]} alt="Imagen principal" className="h-10 w-14 rounded object-cover" />
+
+  const goPrevious = () => setIndex((current) => (current - 1 + urls.length) % urls.length)
+  const goNext = () => setIndex((current) => (current + 1) % urls.length)
+
+  return (
+    <div className="admin-image-carousel">
+      <img src={urls[index]} alt={`Imagen ${index + 1}`} className="admin-image-carousel-img" />
+      <button type="button" className="admin-image-carousel-btn" onClick={goPrevious} aria-label="Imagen anterior">
+        ‹
+      </button>
+      <button type="button" className="admin-image-carousel-btn" onClick={goNext} aria-label="Siguiente imagen">
+        ›
+      </button>
+      <span className="admin-image-carousel-label">Imagenes {index + 1}/{urls.length}</span>
+    </div>
+  )
+}
+
 const getActionAvailability = (action, row) => {
   const reservaState = normalizeState(readValue(row, 'estadoReserva'))
   const estadiaState = normalizeState(readValue(row, 'estadoEstadia'))
@@ -208,7 +247,7 @@ export default function AdminModulePage() {
   const getColumnValue = (row, column) => {
     const value = readValue(row, column)
     if ((column === 'imagenUrl' || column === 'url' || column === 'imagenPrincipalUrl') && value) {
-      return <img src={value} alt="Imagen" className="h-10 w-14 rounded object-cover" />
+      return <ImageCellCarousel row={row} />
     }
     const field = module.fields?.find((item) => item.name === column)
     const relationOptionsForField = field?.type === 'relation' ? relationOptions[field.name] || [] : []

@@ -5,13 +5,17 @@ import RoomTypeCard from '../../components/common/RoomTypeCard'
 import {
   CHECKOUT_STORAGE_KEY,
   asArray,
+  addDays,
   buildSearchParamsFromUrl,
   formatMoney,
   getAccommodationImage,
   getAccommodationLocation,
   getAccommodationTitle,
+  hydrateSearchDates,
   getNights,
   getHttpErrorMessage,
+  loadStoredSearch,
+  persistSearchState,
   getRoomTypeAdults,
   getRoomTypeChildren,
   getRoomTypeGuid,
@@ -23,14 +27,25 @@ import {
 
 export default function AccommodationDetailPage() {
   const { sucursalGuid } = useParams()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const search = useMemo(() => buildSearchParamsFromUrl(searchParams), [searchParams])
+  const search = useMemo(() => {
+    const fromUrl = buildSearchParamsFromUrl(searchParams)
+    const stored = loadStoredSearch()
+    const merged = { ...stored, ...fromUrl }
+    return hydrateSearchDates(merged)
+  }, [searchParams])
   const [detail, setDetail] = useState(null)
   const [reviews, setReviews] = useState([])
   const [selection, setSelection] = useState({})
+  const [stayDates, setStayDates] = useState({ fechaInicio: search.fechaInicio, fechaFin: search.fechaFin })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    setStayDates({ fechaInicio: search.fechaInicio, fechaFin: search.fechaFin })
+    persistSearchState(search)
+  }, [search])
 
   useEffect(() => {
     let alive = true
@@ -78,6 +93,36 @@ export default function AccommodationDetailPage() {
   const subtotal = selectedRooms.reduce((acc, item) => acc + getRoomTypePrice(item.roomType) * item.quantity * Math.max(nights, 1), 0)
   const iva = Number((subtotal * 0.12).toFixed(2))
   const total = Number((subtotal + iva).toFixed(2))
+
+  const syncSearchWithDates = (nextDates) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('fechaInicio', nextDates.fechaInicio)
+    nextParams.set('fechaFin', nextDates.fechaFin)
+    if (!nextParams.get('adultos')) nextParams.set('adultos', String(search.adultos || 2))
+    if (!nextParams.get('ninos')) nextParams.set('ninos', String(search.ninos || 0))
+    if (!nextParams.get('habitaciones')) nextParams.set('habitaciones', String(search.habitaciones || 1))
+    setSearchParams(nextParams)
+    persistSearchState({ ...search, ...nextDates })
+    setError('')
+  }
+
+  const updateCheckIn = (value) => {
+    if (!value) return
+    const nextDates = { ...stayDates, fechaInicio: value }
+    if (!nextDates.fechaFin || nextDates.fechaFin <= value) {
+      nextDates.fechaFin = addDays(value, 1)
+    }
+    setStayDates(nextDates)
+    syncSearchWithDates(nextDates)
+  }
+
+  const updateCheckOut = (value) => {
+    if (!value) return
+    const safeValue = value <= stayDates.fechaInicio ? addDays(stayDates.fechaInicio, 1) : value
+    const nextDates = { ...stayDates, fechaFin: safeValue }
+    setStayDates(nextDates)
+    syncSearchWithDates(nextDates)
+  }
 
   const continueToCheckout = () => {
     if (!search.fechaInicio || !search.fechaFin || nights <= 0) {
@@ -165,6 +210,28 @@ export default function AccommodationDetailPage() {
                   <p className="text-xs text-slate-500">Ninos</p>
                   <p className="text-lg font-bold">{search.ninos}</p>
                 </div>
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <label>
+                  <span className="text-xs font-bold uppercase text-slate-500">Entrada</span>
+                  <input
+                    type="date"
+                    min={new Date().toISOString().slice(0, 10)}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                    value={stayDates.fechaInicio}
+                    onChange={(e) => updateCheckIn(e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span className="text-xs font-bold uppercase text-slate-500">Salida</span>
+                  <input
+                    type="date"
+                    min={stayDates.fechaInicio}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                    value={stayDates.fechaFin}
+                    onChange={(e) => updateCheckOut(e.target.value)}
+                  />
+                </label>
               </div>
             </div>
           </div>

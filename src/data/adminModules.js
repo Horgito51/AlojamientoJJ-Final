@@ -155,7 +155,9 @@ export const adminNavigation = [
 ]
 
 const text = (name, required = true) => ({ name, type: 'text', required })
+const textarea = (name, required = false) => ({ name, type: 'textarea', required, layout: 'wide' })
 const number = (name, required = true) => ({ name, type: 'number', required })
+const numberWithDefault = (name, defaultValue, required = true) => ({ name, type: 'number', defaultValue, required })
 const money = (name, required = true) => ({ name, type: 'number', step: '0.01', required })
 const date = (name) => ({ name, type: 'date', required: true })
 const checkbox = (name, defaultValue = false) => ({ name, type: 'checkbox', defaultValue })
@@ -211,8 +213,8 @@ export const adminModules = {
       text('codigoSucursal'),
       text('nombreSucursal'),
       image('imagenPrincipalUrl', false),
-      text('descripcionSucursal', false),
-      text('descripcionCorta', false),
+      textarea('descripcionSucursal'),
+      textarea('descripcionCorta'),
       select('tipoAlojamiento', accommodationTypes, 'hotel'),
       number('estrellas', false),
       select('categoriaViaje', tripCategories, '', false),
@@ -231,7 +233,7 @@ export const adminModules = {
       checkbox('checkinAnticipado'),
       checkbox('checkoutTardio'),
       checkbox('aceptaNinos', true),
-      number('edadMinimaHuesped', false),
+      numberWithDefault('edadMinimaHuesped', 18, false),
       checkbox('permiteMascotas'),
       checkbox('sePermiteFumar'),
       select('estadoSucursal', activeState, 'ACT'),
@@ -248,7 +250,7 @@ export const adminModules = {
       text('nombreTipoHabitacion'),
       image('imagenPrincipalUrl', false),
       image('imagenSecundariaUrl', false),
-      text('descripcion', false),
+      textarea('descripcion'),
       number('capacidadAdultos'),
       number('capacidadNinos'),
       number('capacidadTotal'),
@@ -272,7 +274,7 @@ export const adminModules = {
       number('piso', false),
       number('capacidadHabitacion'),
       money('precioBase'),
-      text('descripcionHabitacion', false),
+      textarea('descripcionHabitacion'),
       select('estadoHabitacion', roomState, 'DIS'),
     ],
   },
@@ -309,7 +311,7 @@ export const adminModules = {
       text('nombreCatalogo'),
       select('tipoCatalogo', catalogTypes, 'SRV'),
       select('categoriaCatalogo', catalogCategories, '', false),
-      text('descripcionCatalogo', false),
+      textarea('descripcionCatalogo'),
       money('precioBase'),
       checkbox('aplicaIva', true),
       checkbox('disponible24h'),
@@ -358,7 +360,7 @@ export const adminModules = {
       { ...money('saldoPendiente', false), modes: ['update'] },
       select('origenCanalReserva', bookingOrigins, 'ADMIN'),
       { ...select('estadoReserva', bookingState, 'PEN'), modes: ['update'] },
-      text('observaciones', false),
+      textarea('observaciones'),
       checkbox('esWalkin', false),
     ],
     defaults: { numHabitaciones: 1, numAdultos: 1, numNinos: 0, descuentoAplicado: 0 },
@@ -416,7 +418,7 @@ export const adminModules = {
       select('estadoPago', paymentState, 'PEN'),
       select('moneda', currencies, 'USD'),
       money('tipoCambio'),
-      text('respuestaPasarela', false),
+      textarea('respuestaPasarela'),
     ],
     defaults: { moneda: 'USD', tipoCambio: 1, fechaPagoUtc: () => new Date().toISOString() },
   },
@@ -451,7 +453,7 @@ export const adminModules = {
     endpoint: ENDPOINTS.INTERNAL.ROLES,
     idKeys: ['idRol', 'IdRol'],
     columns: ['nombreRol', 'descripcionRol', 'estadoRol', 'activo'],
-    fields: [text('nombreRol'), text('descripcionRol', false), select('estadoRol', activeState, 'ACT'), active],
+    fields: [text('nombreRol'), textarea('descripcionRol'), select('estadoRol', activeState, 'ACT'), active],
   },
   auditoria: {
     title: 'Auditoria',

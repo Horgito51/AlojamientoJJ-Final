@@ -4,10 +4,18 @@ import { accommodationService } from '../../api/accommodationService'
 import SucursalCard from '../../components/common/SucursalCard'
 import banner from '../../assets/images/banner.png'
 import hotelImg from '../../assets/images/hotelJJ.png'
+import { addDays, getDefaultDateRange, loadStoredSearch, persistSearchState } from '../../utils/accommodation'
 
 export default function PublicHome() {
   const [sucursales, setSucursales] = useState([])
   const [loading, setLoading] = useState(true)
+  const [stayDates, setStayDates] = useState(() => {
+    const defaults = getDefaultDateRange()
+    const stored = loadStoredSearch()
+    const fechaInicio = stored.fechaInicio || defaults.fechaInicio
+    const fechaFin = stored.fechaFin && stored.fechaFin > fechaInicio ? stored.fechaFin : addDays(fechaInicio, 1)
+    return { fechaInicio, fechaFin }
+  })
 
   useEffect(() => {
     let alive = true
@@ -30,6 +38,31 @@ export default function PublicHome() {
     }
   }, [])
 
+  useEffect(() => {
+    persistSearchState(stayDates)
+  }, [stayDates])
+
+  const updateCheckIn = (value) => {
+    if (!value) return
+    const next = { ...stayDates, fechaInicio: value }
+    if (!next.fechaFin || next.fechaFin <= value) next.fechaFin = addDays(value, 1)
+    setStayDates(next)
+  }
+
+  const updateCheckOut = (value) => {
+    if (!value) return
+    const safeValue = value <= stayDates.fechaInicio ? addDays(stayDates.fechaInicio, 1) : value
+    setStayDates((prev) => ({ ...prev, fechaFin: safeValue }))
+  }
+
+  const searchQuery = new URLSearchParams({
+    fechaInicio: stayDates.fechaInicio,
+    fechaFin: stayDates.fechaFin,
+    adultos: '2',
+    ninos: '0',
+    habitaciones: '1',
+  }).toString()
+
   return (
     <main className="bg-slate-50 dark:bg-slate-950">
       {/* Hero Section */}
@@ -46,9 +79,31 @@ export default function PublicHome() {
           <p className="mt-6 max-w-2xl text-xl text-slate-200">
             Disfruta de la mejor experiencia de hospedaje con nosotros. Comodidad, elegancia y atención personalizada.
           </p>
+          <div className="mt-8 grid w-full max-w-2xl gap-3 rounded-xl border border-white/20 bg-black/25 p-4 backdrop-blur-sm sm:grid-cols-2">
+            <label>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-100">Entrada</span>
+              <input
+                type="date"
+                min={new Date().toISOString().slice(0, 10)}
+                className="mt-1 w-full rounded-md border border-white/30 bg-white/90 px-3 py-2 text-sm text-slate-900"
+                value={stayDates.fechaInicio}
+                onChange={(e) => updateCheckIn(e.target.value)}
+              />
+            </label>
+            <label>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-100">Salida</span>
+              <input
+                type="date"
+                min={stayDates.fechaInicio}
+                className="mt-1 w-full rounded-md border border-white/30 bg-white/90 px-3 py-2 text-sm text-slate-900"
+                value={stayDates.fechaFin}
+                onChange={(e) => updateCheckOut(e.target.value)}
+              />
+            </label>
+          </div>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
-              to="/alojamientos"
+              to={`/alojamientos?${searchQuery}`}
               className="rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
             >
               Reservar Ahora
@@ -79,11 +134,11 @@ export default function PublicHome() {
           <>
             <div className="grid gap-8 lg:grid-cols-2">
               {sucursales.map((sucursal) => (
-                <SucursalCard key={sucursal.sucursalGuid || sucursal.id} sucursal={sucursal} />
+                <SucursalCard key={sucursal.sucursalGuid || sucursal.id} sucursal={sucursal} search={searchQuery} />
               ))}
             </div>
             <div className="mt-12 text-center">
-              <Link to="/alojamientos" className="inline-flex items-center gap-2 font-bold text-indigo-600 hover:text-indigo-500">
+              <Link to={`/alojamientos?${searchQuery}`} className="inline-flex items-center gap-2 font-bold text-indigo-600 hover:text-indigo-500">
                 Ver alojamientos
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
