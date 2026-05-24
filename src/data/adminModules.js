@@ -163,19 +163,30 @@ const image = (name, required = false) => ({ name, type: 'image', required })
 
 const imagePayload = (payload) => {
   const existingImages = Array.isArray(payload.imagenes) ? payload.imagenes : Array.isArray(payload.Imagenes) ? payload.Imagenes : []
-  const url = payload.imagenPrincipalUrl || payload.urlImagen || payload.imagenUrl || ''
-  const imagenes = url
-    ? [{
-        imagenGuid: payload.imagenGuid || payload.ImagenGuid || '00000000-0000-0000-0000-000000000000',
-        urlImagen: url,
-        descripcion: payload.descripcionImagen || payload.descripcionCorta || payload.descripcion || '',
-        orden: 1,
-        esPrincipal: true,
-      }]
+  const principalUrl = payload.imagenPrincipalUrl || payload.urlImagen || payload.imagenUrl || ''
+  const secondaryUrls = [payload.imagenSecundariaUrl].filter(Boolean)
+  const imagenes = principalUrl || secondaryUrls.length
+    ? [
+        ...(principalUrl ? [{
+          imagenGuid: payload.imagenGuid || payload.ImagenGuid || '00000000-0000-0000-0000-000000000000',
+          urlImagen: principalUrl,
+          descripcion: payload.descripcionImagen || payload.descripcionCorta || payload.descripcion || '',
+          orden: 1,
+          esPrincipal: true,
+        }] : []),
+        ...secondaryUrls.map((url, index) => ({
+          imagenGuid: '00000000-0000-0000-0000-000000000000',
+          urlImagen: url,
+          descripcion: payload.descripcionImagen || payload.descripcion || '',
+          orden: index + 2,
+          esPrincipal: false,
+        })),
+      ]
     : existingImages
 
   const rest = { ...payload }
   delete rest.imagenPrincipalUrl
+  delete rest.imagenSecundariaUrl
   delete rest.urlImagen
   delete rest.imagenUrl
   delete rest.descripcionImagen
@@ -236,6 +247,7 @@ export const adminModules = {
       text('codigoTipoHabitacion'),
       text('nombreTipoHabitacion'),
       image('imagenPrincipalUrl', false),
+      image('imagenSecundariaUrl', false),
       text('descripcion', false),
       number('capacidadAdultos'),
       number('capacidadNinos'),

@@ -61,6 +61,7 @@ const FIELD_LABELS = {
   horaInicio: 'Hora inicio',
   iconoUrl: 'Icono URL',
   imagenPrincipalUrl: 'Imagen principal',
+  imagenSecundariaUrl: 'Imagen secundaria',
   imagenUrl: 'Imagen',
   url: 'Imagen',
   idCliente: 'Cliente',
