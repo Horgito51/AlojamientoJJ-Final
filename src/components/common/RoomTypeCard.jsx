@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   asArray,
   formatMoney,
@@ -7,6 +8,7 @@ import {
   getRoomTypeChildren,
   getRoomTypeGuid,
   getRoomTypeImage,
+  getRoomTypeImages,
   getRoomTypeName,
   getRoomTypePrice,
   getValue,
@@ -15,18 +17,57 @@ import {
 export default function RoomTypeCard({ roomType, quantity = 0, onQuantityChange }) {
   const guid = getRoomTypeGuid(roomType)
   const available = getRoomTypeAvailable(roomType)
-  const image = getRoomTypeImage(roomType)
+  const images = getRoomTypeImages(roomType)
+  const [imageIndex, setImageIndex] = useState(0)
+  const image = images[imageIndex] || getRoomTypeImage(roomType)
   const amenities = asArray(getValue(roomType, ['amenities', 'Amenities', 'amenidades', 'Amenidades']))
   const services = asArray(getValue(roomType, ['servicios', 'Servicios', 'serviciosIncluidos', 'ServiciosIncluidos']))
+  const hasGallery = images.length > 1
+  const goToPreviousImage = () => setImageIndex((current) => (current === 0 ? images.length - 1 : current - 1))
+  const goToNextImage = () => setImageIndex((current) => (current + 1) % images.length)
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="grid gap-4 md:grid-cols-[180px_1fr_150px]">
-        <div className="h-36 overflow-hidden rounded-md bg-slate-200 dark:bg-slate-800">
+        <div className="relative h-36 overflow-hidden rounded-md bg-slate-200 dark:bg-slate-800">
           {image ? (
             <img src={image} alt={getRoomTypeName(roomType)} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-slate-500">Sin imagen</div>
+          )}
+          {hasGallery && (
+            <>
+              <button
+                type="button"
+                onClick={goToPreviousImage}
+                className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-white"
+                aria-label="Imagen anterior"
+              >
+                &lt;
+              </button>
+              <button
+                type="button"
+                onClick={goToNextImage}
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-white"
+                aria-label="Siguiente imagen"
+              >
+                &gt;
+              </button>
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                {images.map((item, index) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setImageIndex(index)}
+                    className={[
+                      'h-2 w-2 rounded-full ring-1 ring-white/80 transition',
+                      index === imageIndex ? 'bg-white' : 'bg-white/45',
+                    ].join(' ')}
+                    aria-label={`Ver imagen ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
 
@@ -76,4 +117,3 @@ export default function RoomTypeCard({ roomType, quantity = 0, onQuantityChange 
     </article>
   )
 }
-

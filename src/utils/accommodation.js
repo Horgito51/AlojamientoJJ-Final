@@ -22,6 +22,8 @@ const getImageUrl = (image) => {
 
 const getFirstImageUrl = (images) => asArray(images).map(getImageUrl).find(Boolean)
 
+export const getImageUrls = (images) => asArray(images).map(getImageUrl).filter(Boolean)
+
 export const formatMoney = (value, currency = 'USD') =>
   new Intl.NumberFormat('es-EC', {
     style: 'currency',
@@ -178,6 +180,20 @@ export const getRoomTypeImage = (roomType) => {
     'urlImagen',
     'UrlImagen',
   ]) || getFirstImageUrl(getValue(roomType, ['imagenes', 'Imagenes']))
+}
+
+export const getRoomTypeImages = (roomType) => {
+  const principal = getValue(roomType, [
+    'imagenPrincipalUrl',
+    'ImagenPrincipalUrl',
+    'imagenPrincipal',
+    'ImagenPrincipal',
+    'imagen',
+    'Imagen',
+    'urlImagen',
+    'UrlImagen',
+  ])
+  return Array.from(new Set([principal, ...getImageUrls(getValue(roomType, ['imagenes', 'Imagenes']))].filter(Boolean)))
 }
 
 export const buildSearchParamsFromUrl = (searchParams) => ({
