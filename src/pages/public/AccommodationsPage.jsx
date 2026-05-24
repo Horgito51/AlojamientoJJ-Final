@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { accommodationService } from '../../api/accommodationService'
 import SucursalCard from '../../components/common/SucursalCard'
-import { buildSearchParamsFromUrl, getHttpErrorMessage, hydrateSearchDates, loadStoredSearch, persistSearchState } from '../../utils/accommodation'
+import { buildSearchParamsFromUrl, getHttpErrorMessage, hydrateSearchDates, loadStoredSearch, matchesAccommodationDestination, persistSearchState } from '../../utils/accommodation'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -18,6 +18,11 @@ export default function AccommodationsPage() {
   const [result, setResult] = useState({ items: [], pagina: 1, totalPaginas: 1, totalResultados: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const displayedItems = useMemo(
+    () => result.items.filter((item) => matchesAccommodationDestination(item, initial.destino)),
+    [result.items, initial.destino]
+  )
+  const displayedTotal = initial.destino ? displayedItems.length : (result.totalResultados || result.items.length)
 
   useEffect(() => {
     queueMicrotask(() => setForm(initial))
@@ -141,7 +146,7 @@ export default function AccommodationsPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between">
-          <p className="text-sm text-slate-500">{result.totalResultados || result.items.length} resultados</p>
+          <p className="text-sm text-slate-500">{displayedTotal} resultados</p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Pagina {result.pagina} de {result.totalPaginas}</p>
         </div>
 
@@ -151,14 +156,14 @@ export default function AccommodationsPage() {
           <div className="grid gap-5 lg:grid-cols-2">
             {[1, 2, 3, 4].map((item) => <div key={item} className="h-64 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />)}
           </div>
-        ) : result.items.length === 0 ? (
+        ) : displayedItems.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
             <p className="font-semibold text-slate-900 dark:text-white">No se encontraron sucursales disponibles para los filtros seleccionados.</p>
             <p className="mt-2 text-sm text-slate-500">Prueba con menos filtros o cambia las fechas.</p>
           </div>
         ) : (
           <div className="grid gap-5 lg:grid-cols-2">
-            {result.items.map((item, index) => (
+            {displayedItems.map((item, index) => (
               <SucursalCard key={item.sucursalGuid || item.SucursalGuid || index} sucursal={item} search={searchParams.toString()} />
             ))}
           </div>

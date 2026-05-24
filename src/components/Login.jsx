@@ -4,6 +4,7 @@ import api from '../api/axiosConfig'
 import { ENDPOINTS } from '../api/endpoints'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth } from '../hooks/useAuth'
+import logo from '../assets/images/Logo.png'
 
 const getAuthPayload = (data) => data?.data ?? data?.result ?? data
 
@@ -174,11 +175,9 @@ export default function Login({ onLoginSuccess }) {
 
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 dark:bg-indigo-500 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 mb-4 transition-colors duration-300">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-            </svg>
-          </div>
+          <Link to="/" className="mb-4 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg shadow-indigo-200 ring-1 ring-gray-100 transition-colors duration-300 dark:bg-gray-900 dark:shadow-indigo-900/50 dark:ring-gray-800">
+            <img src={logo} alt="Alojamiento JJ" className="h-full w-full object-contain p-2" />
+          </Link>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
             Alojamiento JJ
           </h1>

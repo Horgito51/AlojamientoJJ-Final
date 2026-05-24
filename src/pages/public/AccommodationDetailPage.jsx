@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { accommodationService } from '../../api/accommodationService'
 import RoomTypeCard from '../../components/common/RoomTypeCard'
+import hotelImg from '../../assets/images/hotelJJ.png'
 import {
   CHECKOUT_STORAGE_KEY,
   asArray,
@@ -151,7 +152,7 @@ export default function AccommodationDetailPage() {
       alojamiento: {
         nombre: getAccommodationTitle(detail),
         ubicacion: getAccommodationLocation(detail),
-        imagen: getAccommodationImage(detail),
+        imagen: image,
       },
       search,
       rooms: selectedRooms.map(({ roomType, guid, quantity }) => ({
@@ -173,7 +174,7 @@ export default function AccommodationDetailPage() {
   if (error && !detail) return <main className="p-8 text-center text-red-600">{error}</main>
   if (!detail) return <main className="p-8 text-center">Alojamiento no encontrado.</main>
 
-  const image = getAccommodationImage(detail)
+  const image = getAccommodationImage(detail) || hotelImg
   const amenities = asArray(getValue(detail, ['amenities', 'Amenities', 'servicios', 'Servicios']))
   const policies = getValue(detail, ['politicas', 'Politicas'], {})
   const policyText = getValue(policies, ['politicas', 'Politicas'])

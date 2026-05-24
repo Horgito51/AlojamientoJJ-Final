@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import hotelImg from '../../assets/images/hotelJJ.png'
 import {
   formatMoney,
   getAccommodationGuid,
@@ -10,7 +11,7 @@ import {
 
 export default function SucursalCard({ sucursal, search = '' }) {
   const guid = getAccommodationGuid(sucursal)
-  const image = getAccommodationImage(sucursal)
+  const image = getAccommodationImage(sucursal) || hotelImg
   const rating = getValue(sucursal, ['promedioValoracion', 'PromedioValoracion'])
   const services = getValue(sucursal, ['serviciosDestacados', 'ServiciosDestacados'], [])
   const price = Number(getValue(sucursal, ['precioDesde', 'PrecioDesde'], 0))
@@ -64,4 +65,3 @@ export default function SucursalCard({ sucursal, search = '' }) {
     </article>
   )
 }
-

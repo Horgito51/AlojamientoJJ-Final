@@ -1,6 +1,7 @@
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
+import logo from '../assets/images/Logo.png'
 
 function ThemeButton() {
   const { isDark, toggle } = useTheme()
@@ -27,8 +28,8 @@ export default function PublicLayout() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white shadow-sm">
-              JJ
+            <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+              <img src={logo} alt="Alojamiento JJ" className="h-full w-full object-contain p-1" />
             </span>
             <span>
               <span className="block text-sm font-bold text-slate-950 dark:text-white">Alojamiento JJ</span>
@@ -87,12 +88,12 @@ export default function PublicLayout() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white shadow-sm">
-                  JJ
+              <Link to="/" className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                  <img src={logo} alt="Alojamiento JJ" className="h-full w-full object-contain p-1" />
                 </span>
                 <span className="text-lg font-bold text-slate-950 dark:text-white">Alojamiento JJ</span>
-              </div>
+              </Link>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Tu hogar lejos de casa en la ciudad de Cuenca. Comodidad y elegancia a tu alcance.
               </p>

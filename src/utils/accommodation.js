@@ -15,6 +15,13 @@ export const asArray = (value) => {
   return []
 }
 
+const getImageUrl = (image) => {
+  if (typeof image === 'string') return image
+  return getValue(image, ['url', 'Url', 'urlImagen', 'UrlImagen', 'imagen', 'Imagen', 'imagenUrl', 'ImagenUrl'])
+}
+
+const getFirstImageUrl = (images) => asArray(images).map(getImageUrl).find(Boolean)
+
 export const formatMoney = (value, currency = 'USD') =>
   new Intl.NumberFormat('es-EC', {
     style: 'currency',
@@ -95,18 +102,42 @@ export const getAccommodationLocation = (item) =>
   ].filter(Boolean).join(', ') ||
   getValue(item, ['ubicacion', 'Ubicacion', 'direccion', 'Direccion'], 'Cuenca, Ecuador')
 
+const normalizeSearchText = (value = '') =>
+  String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+
+export const matchesAccommodationDestination = (item, destino = '') => {
+  const needle = normalizeSearchText(destino)
+  if (!needle) return true
+  return normalizeSearchText(getAccommodationLocation(item)).includes(needle)
+}
+
 export const getAccommodationImage = (item) => {
   const imagenes = asArray(getValue(item, ['imagenes', 'Imagenes']))
-  return getValue(item, [
+  const roomImageUrls = new Set(
+    getRoomTypes(item)
+      .flatMap((roomType) => asArray(getValue(roomType, ['imagenes', 'Imagenes'])))
+      .map(getImageUrl)
+      .filter(Boolean)
+  )
+  const candidates = [
+    getValue(item, [
     'imagenPrincipalUrl',
     'ImagenPrincipalUrl',
     'imagenPrincipal',
     'ImagenPrincipal',
+    'imagenSucursalUrl',
+    'ImagenSucursalUrl',
+    'urlImagenSucursal',
+    'UrlImagenSucursal',
     'imagen',
     'Imagen',
     'urlImagen',
     'UrlImagen',
-  ]) || getValue(imagenes[0], ['url', 'Url', 'urlImagen', 'UrlImagen', 'imagen', 'Imagen'])
+    ]),
+    ...imagenes.map(getImageUrl),
+  ].filter(Boolean)
+
+  return candidates.find((url) => !roomImageUrls.has(url))
 }
 
 export const getRoomTypes = (detail) =>
@@ -137,13 +168,20 @@ export const getRoomTypeAvailable = (roomType) =>
   Number(getValue(roomType, ['disponiblesEnRango', 'DisponiblesEnRango', 'disponibles', 'Disponibles', 'cantidadDisponible'], 0))
 
 export const getRoomTypeImage = (roomType) => {
-  const imagenes = asArray(getValue(roomType, ['imagenes', 'Imagenes']))
-  return getValue(roomType, ['imagen', 'Imagen', 'urlImagen', 'UrlImagen']) ||
-    getValue(imagenes[0], ['url', 'Url', 'urlImagen', 'UrlImagen', 'imagen', 'Imagen'])
+  return getValue(roomType, [
+    'imagenPrincipalUrl',
+    'ImagenPrincipalUrl',
+    'imagenPrincipal',
+    'ImagenPrincipal',
+    'imagen',
+    'Imagen',
+    'urlImagen',
+    'UrlImagen',
+  ]) || getFirstImageUrl(getValue(roomType, ['imagenes', 'Imagenes']))
 }
 
 export const buildSearchParamsFromUrl = (searchParams) => ({
-  destino: searchParams.get('destino') || 'Cuenca',
+  destino: searchParams.get('destino') || '',
   fechaInicio: searchParams.get('fechaInicio') || '',
   fechaFin: searchParams.get('fechaFin') || '',
   adultos: Number(searchParams.get('adultos') || 2),
