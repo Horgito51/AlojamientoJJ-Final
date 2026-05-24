@@ -1,27 +1,25 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { bookingApi } from '../../api/bookingApi'
-import RoomCard from '../../components/common/RoomCard'
+import { accommodationService } from '../../api/accommodationService'
+import SucursalCard from '../../components/common/SucursalCard'
 import banner from '../../assets/images/banner.png'
 import hotelImg from '../../assets/images/hotelJJ.png'
 
 export default function PublicHome() {
-  const [rooms, setRooms] = useState([])
+  const [sucursales, setSucursales] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let alive = true
-    bookingApi.search('')
+    accommodationService.searchSucursales({ destino: '', pagina: 1, limite: 3 })
       .then((items) => {
         if (alive) {
-          // Filtrar solo las que tengan imagen o datos validos si es necesario, 
-          // pero aqui simplemente tomamos las primeras 3 reales
-          setRooms(items.slice(0, 3))
+          setSucursales(items.items.slice(0, 3))
         }
       })
       .catch((err) => {
-        console.error('Error fetching rooms:', err)
-        if (alive) setRooms([])
+        console.error('Error fetching accommodations:', err)
+        if (alive) setSucursales([])
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -50,7 +48,7 @@ export default function PublicHome() {
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
-              to="/habitaciones"
+              to="/alojamientos"
               className="rounded-full bg-indigo-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
             >
               Reservar Ahora
@@ -65,11 +63,11 @@ export default function PublicHome() {
         </div>
       </section>
 
-      {/* Habitaciones Destacadas */}
+      {/* Sucursales Destacadas */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="mb-12 flex flex-col items-center text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">Nuestras Joyas</p>
-          <h2 className="mt-2 text-4xl font-bold text-slate-900 dark:text-white sm:text-5xl">Habitaciones Disponibles</h2>
+          <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">Nuestras sedes</p>
+          <h2 className="mt-2 text-4xl font-bold text-slate-900 dark:text-white sm:text-5xl">Sucursales disponibles</h2>
           <div className="mt-4 h-1.5 w-20 rounded-full bg-indigo-600" />
         </div>
 
@@ -77,16 +75,16 @@ export default function PublicHome() {
           <div className="flex min-h-[300px] items-center justify-center">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
           </div>
-        ) : rooms.length > 0 ? (
+        ) : sucursales.length > 0 ? (
           <>
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {rooms.map((room) => (
-                <RoomCard key={room.idHabitacion || room.id} room={room} />
+            <div className="grid gap-8 lg:grid-cols-2">
+              {sucursales.map((sucursal) => (
+                <SucursalCard key={sucursal.sucursalGuid || sucursal.id} sucursal={sucursal} />
               ))}
             </div>
             <div className="mt-12 text-center">
-              <Link to="/habitaciones" className="inline-flex items-center gap-2 font-bold text-indigo-600 hover:text-indigo-500">
-                Ver todas las habitaciones
+              <Link to="/alojamientos" className="inline-flex items-center gap-2 font-bold text-indigo-600 hover:text-indigo-500">
+                Ver alojamientos
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -95,8 +93,8 @@ export default function PublicHome() {
           </>
         ) : (
           <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xl text-slate-500">No hay habitaciones disponibles en este momento.</p>
-            <Link to="/habitaciones" className="mt-4 inline-block text-indigo-600 underline">Consultar todas las fechas</Link>
+            <p className="text-xl text-slate-500">No se encontraron sucursales disponibles para los filtros seleccionados.</p>
+            <Link to="/alojamientos" className="mt-4 inline-block text-indigo-600 underline">Consultar todas las fechas</Link>
           </div>
         )}
       </section>

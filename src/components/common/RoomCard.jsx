@@ -1,9 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { getAccommodationGuid } from '../../utils/accommodation'
 import { getRoomImageUrl } from '../../utils/roomImages'
 
 export default function RoomCard({ room }) {
-  const id = room.idHabitacion || room.IdHabitacion || room.id || room.Id || room.habitacionId || 1
+  const id = getAccommodationGuid(room) || room.idHabitacion || room.IdHabitacion || room.id || room.Id || room.habitacionId || 1
   const title = room.nombreTipoHabitacion || room.nombre || room.name || room.tipo || 'Habitacion destacada'
   const description = room.descripcionHabitacion || room.descripcion || room.description || room.summary || 'Disfruta un entorno confortable con servicios incluidos y atencion personalizada.'
   const priceValue = room.precioBase ?? room.precio ?? room.price ?? room.tarifa ?? 35
@@ -52,7 +53,7 @@ export default function RoomCard({ room }) {
             <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{formattedPrice}<span className="text-sm font-normal text-slate-400">/noche</span></p>
           </div>
           <Link 
-            to={`/habitaciones/${id}`} 
+            to={`/alojamientos/${id}`} 
             className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-indigo-600 transition-all hover:bg-indigo-600 hover:text-white dark:bg-slate-800 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

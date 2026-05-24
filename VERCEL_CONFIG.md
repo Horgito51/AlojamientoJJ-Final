@@ -1,77 +1,39 @@
-# 🔧 Configuración para Vercel
+# Configuracion para Vercel
 
-## Pasos para Configurar las Variables de Entorno en Vercel
+## Middleware desplegado
 
-### 1. Accede al Dashboard de Vercel
-- Ve a: https://vercel.com/dashboard
-- Selecciona tu proyecto "alojamiento-front"
+El front consume el middleware desplegado en:
 
-### 2. Configura las Variables de Entorno
-Ve a **Settings → Environment Variables** y agrega:
+`https://middlewarebusapi-b4dxgnfkfvbwa9ge.brazilsouth-01.azurewebsites.net`
 
-**Variable:** `VITE_API_URL`
-**Valor:** `https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net`
+La URL `/swagger/index.html` es solo la interfaz de documentacion, no la base para las llamadas del front.
 
-### 3. Redeploy
+## Proxy del front
+
+No configures `VITE_MIDDLEWARE_BASE_URL` ni `VITE_API_URL` salvo que el middleware tenga CORS habilitado para el dominio del front.
+
+El archivo `vercel.json` ya proxya:
+
+`/api/*` -> `https://middlewarebusapi-b4dxgnfkfvbwa9ge.brazilsouth-01.azurewebsites.net/api/*`
+
+Asi el navegador llama al mismo origen del front y Vercel reenvia al middleware.
+
+## Redeploy
+
 Luego de guardar:
-1. Ve a **Deployments**
-2. Selecciona el último deployment
-3. Haz clic en los tres puntos (...) → **Redeploy**
-4. Confirma "Redeploy" (sin cambios de código)
 
----
+1. Ve a **Deployments**.
+2. Selecciona el ultimo deployment.
+3. Haz clic en los tres puntos (...) y elige **Redeploy**.
 
-## ⚠️ Si el error persiste (Error CORS)
+## Desarrollo local
 
-Si ves en la consola del navegador un error como:
-```
-Access to XMLHttpRequest at 'https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net/api/v1/auth/login' 
-from origin 'https://alojamiento-front-xxxx.vercel.app' has been blocked by CORS policy
-```
+No necesitas `.env.local`. `vite.config.js` ya proxya `/api` al middleware desplegado.
 
-**El problema es el servidor API**, no el cliente. El servidor Azure debe permitir solicitudes desde Vercel.
-
-### Solución en el Backend (API Azure):
-Agrega estos orígenes a CORS en `Program.cs` o `Startup.cs`:
-
-```csharp
-services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", builder =>
-    {
-        builder
-            .AllowAnyOrigin()        // O especifica: .WithOrigins("https://tu-dominio-vercel.vercel.app")
-            .AllowAnyMethod()
-            .AllowAnyHeader();
-    });
-});
-
-// En Configure()
-app.UseCors("AllowAll");
-```
-
----
-
-## 🧪 Para Probar Localmente
-
-Asegúrate de que `.env.local` esté creado con:
-```
-VITE_API_URL=https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net
-```
-
-Luego corre:
 ```bash
 npm run dev
 ```
 
----
+## Si usas URL directa y aparece CORS
 
-## 📋 Checklist de Verificación
-
-- [ ] Archivos `.env.example` y `.env.local` creados
-- [ ] `vite.config.js` actualizado con `historyApiFallback`
-- [ ] `vercel.json` creado con rewrites
-- [ ] `axiosConfig.js` actualizado con logging
-- [ ] Variables de entorno configuradas en Vercel
-- [ ] Redeploy ejecutado en Vercel
-- [ ] Consola del navegador sin errores CORS
+Si defines `VITE_MIDDLEWARE_BASE_URL` o `VITE_API_URL`, el navegador llamara directo a Azure y puede fallar por CORS. En ese caso, habilita CORS en el middleware desplegado o vuelve al proxy `/api`.

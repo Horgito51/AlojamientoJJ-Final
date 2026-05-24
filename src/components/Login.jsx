@@ -63,7 +63,7 @@ export default function Login({ onLoginSuccess }) {
   useEffect(() => {
     if (isAuthenticated()) {
       const isAdmin = hasRole('ADMINISTRADOR') || hasRole('ADMIN') || hasRole('OPERATIVO') || hasRole('DESK_SERVICE')
-      const destination = location.state?.from || (isAdmin ? '/admin' : '/habitaciones')
+      const destination = location.state?.from || (isAdmin ? '/admin' : '/alojamientos')
       navigate(destination, { replace: true })
     }
   }, [isAuthenticated, hasRole, location.state, navigate])
@@ -94,21 +94,21 @@ export default function Login({ onLoginSuccess }) {
       })
 
       const auth = getAuthPayload(data)
-      const token = pickFirstText(auth?.token, auth?.accessToken, auth?.access_token, auth?.jwt)
+      const token = pickFirstText(auth?.token, auth?.Token, auth?.accessToken, auth?.AccessToken, auth?.access_token, auth?.jwt)
 
       if (!token) {
         throw new Error('AUTH_TOKEN_MISSING')
       }
 
       const authPayload = {
-        email: auth?.email ?? auth?.correo ?? username,
-        username: auth?.username ?? auth?.nombreUsuario ?? username,
-        nombreCompleto: auth?.nombreCompleto ?? [auth?.nombres, auth?.apellidos].filter(Boolean).join(' '),
+        email: auth?.email ?? auth?.Email ?? auth?.correo ?? auth?.Correo ?? username,
+        username: auth?.username ?? auth?.Username ?? auth?.nombreUsuario ?? auth?.NombreUsuario ?? username,
+        nombreCompleto: auth?.nombreCompleto ?? auth?.NombreCompleto ?? [auth?.nombres, auth?.Nombres, auth?.apellidos, auth?.Apellidos].filter(Boolean).join(' '),
         token,
-        refreshToken: auth?.refreshToken ?? auth?.refresh_token ?? '',
-        roles: auth?.roles ?? [],
+        refreshToken: auth?.refreshToken ?? auth?.RefreshToken ?? auth?.refresh_token ?? '',
+        roles: auth?.roles ?? auth?.Roles ?? [],
         user: {
-          idCliente: auth?.idCliente,
+          idCliente: auth?.idCliente ?? auth?.IdCliente,
           clienteGuid: auth?.clienteGuid ?? auth?.ClienteGuid,
         }
       }
@@ -121,7 +121,7 @@ export default function Login({ onLoginSuccess }) {
       login(authPayload)
       onLoginSuccess?.(auth)
       
-      const destination = location.state?.from || (isAdmin ? '/admin' : '/habitaciones')
+      const destination = location.state?.from || (isAdmin ? '/admin' : '/alojamientos')
       navigate(destination, { replace: true })
     } catch (err) {
       console.error('[Login Error Full]:', err)

@@ -51,7 +51,7 @@ await apiDebug.testCors()
 
 Deberías ver algo como:
 ```
-[API Config] Base URL: https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net
+[API Config] Base URL:
 [API Request] POST /api/v1/auth/login
 ```
 
@@ -67,7 +67,7 @@ Deberías ver algo como:
 apiDebug.info() // Verifica que la URL sea correcta
 ```
 
-La URL debe ser: `https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net`
+La URL del middleware desplegado es `https://middlewarebusapi-b4dxgnfkfvbwa9ge.brazilsouth-01.azurewebsites.net`, pero el front debe llamarlo mediante `/api` para evitar CORS.
 
 ---
 
@@ -117,7 +117,7 @@ app.UseCors("AllowVercel");
 - [ ] Crear `vercel.json` (ya hecho)
 - [ ] **Configurar en Vercel Dashboard:**
   - Ir a **Settings → Environment Variables**
-  - Agregar: `VITE_API_URL` = `https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net`
+  - No agregar `VITE_MIDDLEWARE_BASE_URL` ni `VITE_API_URL` si se usa el proxy `/api`
 - [ ] **Redeploy en Vercel:**
   - Ir a **Deployments**
   - Click en los tres puntos (...) del último deployment
@@ -149,7 +149,7 @@ npm run lint
 2. **Ejecuta en la consola:**
    ```javascript
    // Copiar y pegar en Console (F12)
-   fetch('https://alojamientojj-dabge3g4eufvd8a2.mexicocentral-01.azurewebsites.net/api/v1/auth/login', {
+   fetch('/api/v1/auth/login', {
      method: 'POST',
      headers: { 'Content-Type': 'application/json' },
      body: JSON.stringify({ username: 'admin_master@hotel.com', password: 'HASH_SECRETO123' })

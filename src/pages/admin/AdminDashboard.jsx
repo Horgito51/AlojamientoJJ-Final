@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ENDPOINTS } from '../../api/endpoints'
 import { adminApi } from '../../api/adminApi'
+import { getHttpErrorMessage } from '../../utils/accommodation'
 import hotelImg from '../../assets/images/hotelJJ.png'
 
 const cards = [
@@ -13,10 +14,18 @@ const cards = [
 export default function AdminDashboard() {
   const [summary, setSummary] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let alive = true
-    Promise.all(cards.map((card) => adminApi.list(card.endpoint).then((items) => ({ ...card, total: items.length })).catch(() => ({ ...card, total: 0 }))))
+    let authErrorReported = false
+    Promise.all(cards.map((card) => adminApi.list(card.endpoint).then((items) => ({ ...card, total: items.length })).catch((err) => {
+      if (!authErrorReported && [401, 403].includes(err?.response?.status)) {
+        authErrorReported = true
+        if (alive) setError(getHttpErrorMessage(err))
+      }
+      return { ...card, total: 0 }
+    })))
       .then((items) => alive && setSummary(items))
       .finally(() => alive && setLoading(false))
     return () => {
@@ -51,6 +60,7 @@ export default function AdminDashboard() {
       </section>
 
       {/* Summary Cards */}
+      {error && <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {(loading ? cards.map((card) => ({ ...card, total: '...' })) : summary).map((card) => (
           <article key={card.label} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900">

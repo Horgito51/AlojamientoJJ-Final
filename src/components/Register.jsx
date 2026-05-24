@@ -58,7 +58,7 @@ export default function Register() {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate(location.state?.from || '/habitaciones', { replace: true })
+      navigate(location.state?.from || '/alojamientos', { replace: true })
     }
   }, [isAuthenticated, location.state, navigate])
 
@@ -129,7 +129,7 @@ export default function Register() {
       }
 
       login(authPayload)
-      navigate(location.state?.from || '/habitaciones', { replace: true })
+      navigate(location.state?.from || '/alojamientos', { replace: true })
     } catch (error) {
       console.error('Register error:', error?.response?.data || error)
 

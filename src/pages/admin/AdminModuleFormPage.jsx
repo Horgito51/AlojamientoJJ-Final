@@ -28,7 +28,11 @@ export default function AdminModuleFormPage() {
     if (!module) return 'Modulo no encontrado'
     return `${isEdit ? 'Editar' : 'Crear'} ${module.title}`
   }, [isEdit, module])
-  const relationFields = useMemo(() => module?.fields?.filter((field) => field.type === 'relation') || [], [module])
+  const visibleFields = useMemo(() => {
+    const mode = isEdit ? 'update' : 'create'
+    return module?.fields?.filter((field) => !field.modes || field.modes.includes(mode)) || []
+  }, [isEdit, module])
+  const relationFields = useMemo(() => visibleFields.filter((field) => field.type === 'relation'), [visibleFields])
   const loadingRelations = relationFields.some((field) => !relationOptions[field.name])
 
   useEffect(() => {
@@ -143,9 +147,10 @@ export default function AdminModuleFormPage() {
   }
 
   const renderField = (field) => {
+    const controlClass = 'rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-900/40'
     if (field.type === 'select') {
       return (
-        <select name={field.name} required={field.required} value={form[field.name] ?? ''} onChange={updateForm} className="rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
+        <select name={field.name} required={field.required} value={form[field.name] ?? ''} onChange={updateForm} className={controlClass}>
           {!field.required && <option value="">Sin seleccionar</option>}
           {field.options.map((option) => (
             <option key={getOptionValue(option)} value={getOptionValue(option)}>
@@ -160,7 +165,7 @@ export default function AdminModuleFormPage() {
       const options = relationOptions[field.name] || []
       const value = form[field.name] ?? (field.multiple ? [] : '')
       return (
-        <select multiple={field.multiple} name={field.name} required={field.required && (!field.multiple || value.length === 0)} disabled={loadingRelations} value={value} onChange={updateForm} className="rounded-md border border-slate-300 px-3 py-2 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950">
+        <select multiple={field.multiple} name={field.name} required={field.required && (!field.multiple || value.length === 0)} disabled={loadingRelations} value={value} onChange={updateForm} className={`${controlClass} disabled:opacity-60`}>
           {!field.multiple && <option value="">{loadingRelations ? 'Cargando opciones...' : 'Selecciona una opcion'}</option>}
           {options.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
@@ -183,7 +188,7 @@ export default function AdminModuleFormPage() {
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={(e) => handleFileChange(field.name, e)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 dark:border-slate-700 dark:bg-slate-950"
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 file:mr-3 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           />
           {(preview || existingUrl) && (
             <img
@@ -206,7 +211,7 @@ export default function AdminModuleFormPage() {
         readOnly={isComputedCapacityTotal}
         value={form[field.name] ?? ''}
         onChange={updateForm}
-        className="rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
+        className={controlClass}
       />
     )
   }
@@ -248,7 +253,7 @@ export default function AdminModuleFormPage() {
     setSaving(true)
     try {
       let enrichedForm = { ...form }
-      const requiredError = (module.fields || []).find((field) => {
+      const requiredError = visibleFields.find((field) => {
         if (!field.required) return false
         if (field.type === 'checkbox' || field.type === 'image') return false
         const value = enrichedForm[field.name]
@@ -264,7 +269,7 @@ export default function AdminModuleFormPage() {
         return
       }
 
-      const invalidNumber = (module.fields || []).find((field) => {
+      const invalidNumber = visibleFields.find((field) => {
         if (!['number'].includes(field.type)) return false
         const value = enrichedForm[field.name]
         return value !== undefined && value !== null && String(value).trim() !== '' && Number.isNaN(Number(value))
@@ -286,7 +291,7 @@ export default function AdminModuleFormPage() {
         return
       }
 
-      const imageFields = (module.fields || []).filter((f) => f.type === 'image')
+      const imageFields = visibleFields.filter((f) => f.type === 'image')
       for (const field of imageFields) {
         const file = imageFiles[field.name]
         const existingUrl = form[field.name]
@@ -350,9 +355,9 @@ export default function AdminModuleFormPage() {
       ) : (
         <form onSubmit={submit} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {module.fields.map((field) => (
-              <label key={field.name} className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">{getFieldLabel(field)}</span>
+            {visibleFields.map((field) => (
+              <label key={field.name} className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
+                <span className="font-medium text-slate-800 dark:text-slate-100">{getFieldLabel(field)}</span>
                 {renderField(field)}
               </label>
             ))}

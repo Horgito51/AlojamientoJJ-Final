@@ -37,8 +37,8 @@ export default function PublicLayout() {
           </Link>
  
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300 md:flex">
-            <Link className="hover:text-indigo-600 transition-colors" to="/habitaciones">Habitaciones</Link>
-            <Link className="hover:text-indigo-600 transition-colors" to="/reserva">Reservar</Link>
+            <Link className="hover:text-indigo-600 transition-colors" to="/alojamientos">Alojamientos</Link>
+            <Link className="hover:text-indigo-600 transition-colors" to="/alojamientos">Reservar</Link>
             {loggedIn && <Link className="hover:text-indigo-600 transition-colors" to="/pagos">Pagos</Link>}
             {loggedIn && <Link className="hover:text-indigo-600 transition-colors" to="/mis-reservas">Mis Reservas</Link>}
             {isAdmin && <Link className="font-bold text-indigo-600 dark:text-indigo-400" to="/admin">Admin</Link>}
@@ -72,10 +72,10 @@ export default function PublicLayout() {
               </button>
             )}
             <Link
-              to="/habitaciones"
+              to="/alojamientos"
               className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
             >
-              Ver habitaciones
+              Buscar
             </Link>
           </div>
         </div>
@@ -100,8 +100,8 @@ export default function PublicLayout() {
             <div>
               <h4 className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Enlaces</h4>
               <ul className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li><Link to="/habitaciones" className="hover:text-indigo-600">Habitaciones</Link></li>
-                <li><Link to="/reserva" className="hover:text-indigo-600">Reservar</Link></li>
+                <li><Link to="/alojamientos" className="hover:text-indigo-600">Alojamientos</Link></li>
+                <li><Link to="/alojamientos" className="hover:text-indigo-600">Reservar</Link></li>
                 <li><a href="#sobre-nosotros" className="hover:text-indigo-600">Sobre Nosotros</a></li>
               </ul>
             </div>

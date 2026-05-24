@@ -3,8 +3,7 @@ import { ENDPOINTS } from '../api/endpoints'
 const active = { name: 'activo', type: 'checkbox', defaultValue: true }
 const option = (value, label) => ({ value, label })
 const select = (name, options, defaultValue = '', required = true) => ({ name, type: 'select', options, defaultValue, required })
-const relation = (name, endpoint, valueKeys, labelKeys, required = true) => ({ name, type: 'relation', endpoint, valueKeys, labelKeys, required })
-const relationMultiple = (name, endpoint, valueKeys, labelKeys, required = true) => ({ name, type: 'relation', endpoint, valueKeys, labelKeys, required, multiple: true })
+const relation = (name, endpoint, valueKeys, labelKeys, required = true, valueType = 'number') => ({ name, type: 'relation', endpoint, valueKeys, labelKeys, required, valueType })
 
 const activeState = [
   option('ACT', 'Activo'),
@@ -157,19 +156,50 @@ export const adminNavigation = [
 
 const text = (name, required = true) => ({ name, type: 'text', required })
 const number = (name, required = true) => ({ name, type: 'number', required })
-const money = (name) => ({ name, type: 'number', step: '0.01', required: true })
+const money = (name, required = true) => ({ name, type: 'number', step: '0.01', required })
 const date = (name) => ({ name, type: 'date', required: true })
 const checkbox = (name, defaultValue = false) => ({ name, type: 'checkbox', defaultValue })
+const image = (name, required = false) => ({ name, type: 'image', required })
+
+const imagePayload = (payload) => {
+  const existingImages = Array.isArray(payload.imagenes) ? payload.imagenes : Array.isArray(payload.Imagenes) ? payload.Imagenes : []
+  const url = payload.imagenPrincipalUrl || payload.urlImagen || payload.imagenUrl || ''
+  const imagenes = url
+    ? [{
+        imagenGuid: payload.imagenGuid || payload.ImagenGuid || '00000000-0000-0000-0000-000000000000',
+        urlImagen: url,
+        descripcion: payload.descripcionImagen || payload.descripcionCorta || payload.descripcion || '',
+        orden: 1,
+        esPrincipal: true,
+      }]
+    : existingImages
+
+  const rest = { ...payload }
+  delete rest.imagenPrincipalUrl
+  delete rest.urlImagen
+  delete rest.imagenUrl
+  delete rest.descripcionImagen
+  delete rest.imagenGuid
+  delete rest.ImagenGuid
+  delete rest.imagenes
+  delete rest.Imagenes
+
+  return {
+    ...rest,
+    imagenes,
+  }
+}
 
 export const adminModules = {
   sucursales: {
     title: 'Sucursales',
     endpoint: ENDPOINTS.INTERNAL.SUCURSALES,
     idKeys: ['idSucursal', 'IdSucursal'],
-    columns: ['codigoSucursal', 'nombreSucursal', 'ciudad', 'telefono', 'estadoSucursal'],
+    columns: ['imagenPrincipalUrl', 'codigoSucursal', 'nombreSucursal', 'ciudad', 'telefono', 'estadoSucursal'],
     fields: [
       text('codigoSucursal'),
       text('nombreSucursal'),
+      image('imagenPrincipalUrl', false),
       text('descripcionSucursal', false),
       text('descripcionCorta', false),
       select('tipoAlojamiento', accommodationTypes, 'hotel'),
@@ -195,15 +225,17 @@ export const adminModules = {
       checkbox('sePermiteFumar'),
       select('estadoSucursal', activeState, 'ACT'),
     ],
+    transformPayload: imagePayload,
   },
   'tipos-habitacion': {
     title: 'Tipos de habitacion',
     endpoint: ENDPOINTS.INTERNAL.TIPOS_HABITACION,
     idKeys: ['idTipoHabitacion', 'IdTipoHabitacion'],
-    columns: ['codigoTipoHabitacion', 'nombreTipoHabitacion', 'capacidadTotal', 'tipoCama', 'estadoTipoHabitacion'],
+    columns: ['imagenPrincipalUrl', 'codigoTipoHabitacion', 'nombreTipoHabitacion', 'capacidadTotal', 'tipoCama', 'estadoTipoHabitacion'],
     fields: [
       text('codigoTipoHabitacion'),
       text('nombreTipoHabitacion'),
+      image('imagenPrincipalUrl', false),
       text('descripcion', false),
       number('capacidadAdultos'),
       number('capacidadNinos'),
@@ -214,12 +246,13 @@ export const adminModules = {
       checkbox('permiteReservaPublica', true),
       select('estadoTipoHabitacion', activeState, 'ACT'),
     ],
+    transformPayload: imagePayload,
   },
   habitaciones: {
     title: 'Habitaciones',
     endpoint: ENDPOINTS.INTERNAL.HABITACIONES,
     idKeys: ['idHabitacion', 'IdHabitacion'],
-    columns: ['numeroHabitacion', 'idSucursal', 'idTipoHabitacion', 'precioBase', 'estadoHabitacion', 'imagenUrl'],
+    columns: ['numeroHabitacion', 'idSucursal', 'idTipoHabitacion', 'precioBase', 'estadoHabitacion'],
     fields: [
       relation('idSucursal', ENDPOINTS.INTERNAL.SUCURSALES, ['idSucursal', 'IdSucursal', 'id'], ['nombreSucursal', 'codigoSucursal']),
       relation('idTipoHabitacion', ENDPOINTS.INTERNAL.TIPOS_HABITACION, ['idTipoHabitacion', 'IdTipoHabitacion', 'id'], ['nombreTipoHabitacion', 'codigoTipoHabitacion']),
@@ -229,13 +262,7 @@ export const adminModules = {
       money('precioBase'),
       text('descripcionHabitacion', false),
       select('estadoHabitacion', roomState, 'DIS'),
-      { name: 'imagenUrl', type: 'image', required: true },
     ],
-    transformPayload: (payload) => ({
-      ...payload,
-      url: payload.url || payload.imagenUrl || payload.ImagenUrl || '',
-      imagenUrl: payload.imagenUrl || payload.url || payload.Url || '',
-    }),
   },
   tarifas: {
     title: 'Tarifas',
@@ -302,32 +329,42 @@ export const adminModules = {
     title: 'Reservas',
     endpoint: ENDPOINTS.INTERNAL.RESERVAS,
     idKeys: ['idReserva', 'IdReserva'],
-    columns: ['idCliente', 'idSucursal', 'fechaInicio', 'fechaFin', 'estadoReserva'],
+    columns: ['idCliente', 'idSucursal', 'fechaInicio', 'fechaFin', 'totalReserva', 'estadoReserva'],
     fields: [
-      relation('idCliente', ENDPOINTS.INTERNAL.CLIENTES, ['idCliente', 'IdCliente', 'id'], ['nombres', 'apellidos', 'numeroIdentificacion']),
-      relation('idSucursal', ENDPOINTS.INTERNAL.SUCURSALES, ['idSucursal', 'IdSucursal', 'id'], ['nombreSucursal', 'codigoSucursal']),
-      relationMultiple('habitaciones', ENDPOINTS.INTERNAL.HABITACIONES, ['idHabitacion', 'IdHabitacion', 'id'], ['numeroHabitacion']),
+      { ...relation('clienteGuid', ENDPOINTS.INTERNAL.CLIENTES, ['clienteGuid', 'ClienteGuid', 'guidCliente', 'GuidCliente'], ['nombres', 'apellidos', 'numeroIdentificacion'], true, 'string'), modes: ['create'] },
+      { ...relation('sucursalGuid', ENDPOINTS.INTERNAL.SUCURSALES, ['sucursalGuid', 'SucursalGuid', 'guidSucursal', 'GuidSucursal'], ['nombreSucursal', 'codigoSucursal'], true, 'string'), modes: ['create'] },
+      { ...relation('tipoHabitacionGuid', ENDPOINTS.INTERNAL.TIPOS_HABITACION, ['tipoHabitacionGuid', 'TipoHabitacionGuid', 'guidTipoHabitacion', 'GuidTipoHabitacion'], ['nombreTipoHabitacion', 'codigoTipoHabitacion'], true, 'string'), modes: ['create'] },
       date('fechaInicio'),
       date('fechaFin'),
-      money('subtotalReserva'),
-      money('valorIva'),
-      money('totalReserva'),
+      { ...number('numHabitaciones'), modes: ['create'] },
+      { ...number('numAdultos'), modes: ['create'] },
+      { ...number('numNinos', false), modes: ['create'] },
       number('descuentoAplicado', false),
-      money('saldoPendiente'),
+      { ...money('subtotalReserva', false), modes: ['update'] },
+      { ...money('valorIva', false), modes: ['update'] },
+      { ...money('totalReserva', false), modes: ['update'] },
+      { ...money('saldoPendiente', false), modes: ['update'] },
       select('origenCanalReserva', bookingOrigins, 'ADMIN'),
-      select('estadoReserva', bookingState, 'PEN'),
+      { ...select('estadoReserva', bookingState, 'PEN'), modes: ['update'] },
       text('observaciones', false),
       checkbox('esWalkin', false),
     ],
-    transformPayload: (payload) => {
-      const p = { ...payload }
-      if (p.habitaciones && Array.isArray(p.habitaciones)) {
-        p.habitaciones = p.habitaciones.map(id => ({ idHabitacion: Number(id) }))
-      } else if (p.idHabitacion) {
-        p.habitaciones = [{ idHabitacion: Number(p.idHabitacion) }]
-        delete p.idHabitacion
+    defaults: { numHabitaciones: 1, numAdultos: 1, numNinos: 0, descuentoAplicado: 0 },
+    createPayloadFields: ['clienteGuid', 'sucursalGuid', 'fechaInicio', 'fechaFin', 'descuentoAplicado', 'observaciones', 'esWalkin', 'origenCanalReserva', 'habitaciones'],
+    updatePayloadFields: ['fechaInicio', 'fechaFin', 'subtotalReserva', 'valorIva', 'totalReserva', 'descuentoAplicado', 'saldoPendiente', 'estadoReserva', 'observaciones'],
+    transformPayload: (payload, mode) => {
+      if (mode === 'update') return payload
+      const { tipoHabitacionGuid, numHabitaciones, numAdultos, numNinos, descuentoLinea, ...rest } = payload
+      return {
+        ...rest,
+        habitaciones: [{
+          tipoHabitacionGuid,
+          numHabitaciones: Number(numHabitaciones) || 1,
+          numAdultos: Number(numAdultos) || 1,
+          numNinos: Number(numNinos) || 0,
+          descuentoLinea: Number(descuentoLinea) || 0,
+        }],
       }
-      return p
     },
     actions: ['confirmarReserva', 'cancelarReserva', 'ejecutarPago'],
   },

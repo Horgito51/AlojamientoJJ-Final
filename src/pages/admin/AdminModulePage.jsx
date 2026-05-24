@@ -7,6 +7,7 @@ import AdminDataTable from '../../components/admin/AdminDataTable'
 import { getActionLabel, getFieldLabel, getFieldValueLabel, getStatusTone, isStatusField, readValue, resolveId } from '../../utils/adminModule'
 import { confirmDelete, getErrorMessage, showError, showSuccess } from '../../utils/sweetAlert'
 import PaymentModal from '../../components/common/PaymentModal'
+import { getHttpErrorMessage } from '../../utils/accommodation'
 
 const iconPaths = {
   view: 'M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12Zm9.75 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
@@ -156,8 +157,8 @@ export default function AdminModulePage() {
         ? await adminApi.list(ENDPOINTS.INTERNAL.PAGOS.byFactura(paymentInvoiceFilter))
         : await adminApi.list(module.endpoint)
       setRows(items)
-    } catch {
-      setError('No se pudo cargar el modulo. Verifica backend o permisos.')
+    } catch (err) {
+      setError(getHttpErrorMessage(err, 'No se pudo cargar el modulo. Verifica backend o permisos.'))
     } finally {
       setLoading(false)
     }
@@ -206,7 +207,7 @@ export default function AdminModulePage() {
   const getRowId = (row) => resolveId(row, module)
   const getColumnValue = (row, column) => {
     const value = readValue(row, column)
-    if ((column === 'imagenUrl' || column === 'url') && value) {
+    if ((column === 'imagenUrl' || column === 'url' || column === 'imagenPrincipalUrl') && value) {
       return <img src={value} alt="Imagen" className="h-10 w-14 rounded object-cover" />
     }
     const field = module.fields?.find((item) => item.name === column)

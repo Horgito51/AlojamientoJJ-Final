@@ -19,6 +19,7 @@ const FIELD_LABELS = {
   checkoutTardio: 'Check-out tardio',
   checkoutUtc: 'Check-out',
   ciudad: 'Ciudad',
+  clienteGuid: 'Cliente',
   codigoAutorizacion: 'Codigo de autorizacion',
   codigoCatalogo: 'Codigo',
   codigoPostal: 'Codigo postal',
@@ -59,6 +60,7 @@ const FIELD_LABELS = {
   horaFin: 'Hora fin',
   horaInicio: 'Hora inicio',
   iconoUrl: 'Icono URL',
+  imagenPrincipalUrl: 'Imagen principal',
   imagenUrl: 'Imagen',
   url: 'Imagen',
   idCliente: 'Cliente',
@@ -84,6 +86,9 @@ const FIELD_LABELS = {
   nombres: 'Nombres',
   numeroFactura: 'Factura',
   numeroHabitacion: 'Habitacion',
+  numAdultos: 'Adultos',
+  numHabitaciones: 'Habitaciones',
+  numNinos: 'Ninos',
   numeroIdentificacion: 'Identificacion',
   observaciones: 'Observaciones',
   origenCanalReserva: 'Origen de reserva',
@@ -113,6 +118,7 @@ const FIELD_LABELS = {
   tipoCama: 'Tipo de cama',
   tipoCatalogo: 'Tipo',
   tipoIdentificacion: 'Tipo de identificacion',
+  tipoHabitacionGuid: 'Tipo de habitacion',
   total: 'Total',
   totalReserva: 'Total reserva',
   transaccionExterna: 'Transaccion externa',
@@ -153,6 +159,12 @@ export const readValue = (row, key) => {
   if (!row || !key) return ''
   if (key === 'imagenUrl') return row.imagenUrl ?? row.ImagenUrl ?? row.url ?? row.Url ?? ''
   if (key === 'url') return row.url ?? row.Url ?? row.imagenUrl ?? row.ImagenUrl ?? ''
+  if (key === 'imagenPrincipalUrl') {
+    const images = row.imagenes ?? row.Imagenes ?? []
+    const normalizedImages = Array.isArray(images) ? images : images?.$values || []
+    const principal = normalizedImages.find((image) => image.esPrincipal || image.EsPrincipal) || normalizedImages[0]
+    return row.imagenPrincipalUrl ?? row.ImagenPrincipalUrl ?? row.urlImagen ?? row.UrlImagen ?? principal?.urlImagen ?? principal?.UrlImagen ?? principal?.url ?? principal?.Url ?? ''
+  }
   return row[key] ?? row[lowerFirst(key)] ?? row[key.charAt(0).toUpperCase() + key.slice(1)] ?? ''
 }
 
@@ -238,7 +250,16 @@ export const coercePayload = (values, module, mode) => {
   const payload = { ...values }
   for (const field of module.fields || []) {
     if (field.type === 'checkbox') payload[field.name] = Boolean(payload[field.name])
-    if (field.type === 'number' || field.type === 'relation') payload[field.name] = payload[field.name] === '' ? null : Number(payload[field.name])
+    if (field.type === 'number') payload[field.name] = payload[field.name] === '' ? null : Number(payload[field.name])
+    if (field.type === 'relation') {
+      if (field.multiple) {
+        payload[field.name] = Array.isArray(payload[field.name])
+          ? payload[field.name].map((item) => field.valueType === 'string' ? String(item) : Number(item))
+          : []
+      } else {
+        payload[field.name] = payload[field.name] === '' ? null : field.valueType === 'string' ? String(payload[field.name]) : Number(payload[field.name])
+      }
+    }
     if (field.type === 'date') payload[field.name] = toIsoDateTime(payload[field.name])
   }
   for (const [key, value] of Object.entries(module.defaults || {})) {

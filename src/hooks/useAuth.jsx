@@ -1,8 +1,7 @@
-import { useState, useContext, createContext, useCallback } from 'react'
+import { useState, useContext, createContext, useCallback, useEffect } from 'react'
+import { AUTH_SESSION_EXPIRED_EVENT, LOCAL_STORAGE_AUTH_KEY } from '../utils/auth'
 
 const AuthContext = createContext(null)
-
-export const LOCAL_STORAGE_AUTH_KEY = 'alojamiento-auth'
 
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(() => {
@@ -20,14 +19,28 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY)
   }, [])
 
+  useEffect(() => {
+    const handleExpiredSession = () => {
+      setAuth(null)
+      localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY)
+      if (window.location.pathname !== '/login') {
+        window.location.assign('/login')
+      }
+    }
+
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleExpiredSession)
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleExpiredSession)
+  }, [])
+
   const isAuthenticated = useCallback(() => {
     return auth?.token ? true : false
   }, [auth])
 
   const getUserRoles = useCallback(() => {
-    if (!auth?.roles) return []
+    const rawRoles = auth?.roles ?? auth?.Roles
+    if (!rawRoles) return []
     // Manejar tanto array simple como objeto con $values de .NET
-    const roles = Array.isArray(auth.roles) ? auth.roles : auth.roles?.$values || []
+    const roles = Array.isArray(rawRoles) ? rawRoles : rawRoles?.$values || []
     return roles.map(r => String(r.nombreRol || r).toUpperCase())
   }, [auth])
 
@@ -44,6 +57,7 @@ export const AuthProvider = ({ children }) => {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
