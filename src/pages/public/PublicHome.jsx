@@ -74,10 +74,10 @@ export default function PublicHome() {
         />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center text-white sm:px-6 lg:px-8">
           <h1 className="max-w-4xl text-4xl font-extrabold tracking-tight sm:text-6xl">
-            Tu refugio perfecto en el corazón de Cuenca
+            Hoteles comodos para cada viaje
           </h1>
           <p className="mt-6 max-w-2xl text-xl text-slate-200">
-            Disfruta de la mejor experiencia de hospedaje con nosotros. Comodidad, elegancia y atención personalizada.
+            Encuentra sedes disponibles, compara opciones y reserva tu estadia con atencion cercana y espacios pensados para descansar.
           </p>
           <div className="mt-8 grid w-full max-w-2xl gap-3 rounded-xl border border-white/20 bg-black/25 p-4 backdrop-blur-sm sm:grid-cols-2">
             <label>
@@ -180,17 +180,17 @@ export default function PublicHome() {
               </div>
               
               <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-                Alojamiento JJ es un emprendimiento familiar nacido con el deseo de ofrecer un hogar lejos de casa. 
-                Ubicados en el corazón de Cuenca, nos enfocamos en brindar una experiencia personalizada que 
-                combine la modernidad de nuestras instalaciones con la calidez tradicional de nuestra tierra.
+                Alojamiento JJ es una cadena de hoteles nacida con el deseo de ofrecer un hogar lejos de casa. 
+                Contamos con sedes pensadas para turismo, negocios y descanso, combinando instalaciones modernas 
+                con un servicio cercano y confiable.
               </p>
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="rounded-xl bg-slate-50 p-6 transition-colors hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-950/30">
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">Nuestra Misión</h3>
                   <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-                    Brindar un servicio de alojamiento excepcional en la ciudad de Cuenca, combinando confort, 
-                    hospitalidad y tecnología para superar las expectativas de nuestros huéspedes.
+                    Brindar un servicio hotelero excepcional, combinando confort, hospitalidad y tecnologia para 
+                    superar las expectativas de nuestros huespedes en cada sede.
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-6 transition-colors hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-950/30">

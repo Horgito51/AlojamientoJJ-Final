@@ -33,7 +33,7 @@ export default function PublicLayout() {
             </span>
             <span>
               <span className="block text-sm font-bold text-slate-950 dark:text-white">Alojamiento JJ</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">Hospedaje en Cuenca</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">Hoteles y estadias</span>
             </span>
           </Link>
  
@@ -95,7 +95,7 @@ export default function PublicLayout() {
                 <span className="text-lg font-bold text-slate-950 dark:text-white">Alojamiento JJ</span>
               </Link>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Tu hogar lejos de casa en la ciudad de Cuenca. Comodidad y elegancia a tu alcance.
+                Hoteles comodos para turismo, negocios y descanso. Reserva facil y atencion cercana.
               </p>
             </div>
             <div>
@@ -109,7 +109,7 @@ export default function PublicLayout() {
             <div>
               <h4 className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Contacto</h4>
               <ul className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li>Cuenca, Ecuador</li>
+                <li>Ecuador</li>
                 <li>info@alojamientojj.com</li>
                 <li>+593 99 999 9999</li>
               </ul>
