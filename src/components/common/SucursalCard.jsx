@@ -3,6 +3,7 @@ import logo from '../../assets/images/Logo.png'
 import {
   formatMoney,
   getAccommodationGuid,
+  getAccommodationImage,
   getAccommodationLocation,
   getAccommodationTitle,
   getValue,
@@ -10,6 +11,7 @@ import {
 
 export default function SucursalCard({ sucursal, search = '' }) {
   const guid = getAccommodationGuid(sucursal)
+  const image = getAccommodationImage(sucursal)
   const rating = getValue(sucursal, ['promedioValoracion', 'PromedioValoracion'])
   const services = getValue(sucursal, ['serviciosDestacados', 'ServiciosDestacados'], [])
   const price = Number(getValue(sucursal, ['precioDesde', 'PrecioDesde'], 0))
@@ -17,13 +19,19 @@ export default function SucursalCard({ sucursal, search = '' }) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       <div className="grid md:grid-cols-[240px_1fr]">
-        <div className="flex h-56 items-center justify-center bg-slate-100 p-8 md:h-full dark:bg-slate-800">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
-              <img src={logo} alt="Alojamiento JJ" className="h-full w-full object-contain p-3" />
-            </span>
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Sucursal</span>
-          </div>
+        <div className="h-56 bg-slate-100 md:h-full dark:bg-slate-800">
+          {image ? (
+            <img src={image} alt={getAccommodationTitle(sucursal)} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center p-8">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                  <img src={logo} alt="Alojamiento JJ" className="h-full w-full object-contain p-3" />
+                </span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Sucursal</span>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex flex-col p-5">
           <div className="flex items-start justify-between gap-3">
