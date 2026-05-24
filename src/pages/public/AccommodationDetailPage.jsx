@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { accommodationService } from '../../api/accommodationService'
 import RoomTypeCard from '../../components/common/RoomTypeCard'
-import hotelImg from '../../assets/images/hotelJJ.png'
+import logo from '../../assets/images/Logo.png'
 import {
   CHECKOUT_STORAGE_KEY,
   asArray,
@@ -152,7 +152,7 @@ export default function AccommodationDetailPage() {
       alojamiento: {
         nombre: getAccommodationTitle(detail),
         ubicacion: getAccommodationLocation(detail),
-        imagen: image,
+        imagen: image || logo,
       },
       search,
       rooms: selectedRooms.map(({ roomType, guid, quantity }) => ({
@@ -174,7 +174,7 @@ export default function AccommodationDetailPage() {
   if (error && !detail) return <main className="p-8 text-center text-red-600">{error}</main>
   if (!detail) return <main className="p-8 text-center">Alojamiento no encontrado.</main>
 
-  const image = getAccommodationImage(detail) || hotelImg
+  const image = getAccommodationImage(detail)
   const amenities = asArray(getValue(detail, ['amenities', 'Amenities', 'servicios', 'Servicios']))
   const policies = getValue(detail, ['politicas', 'Politicas'], {})
   const policyText = getValue(policies, ['politicas', 'Politicas'])
@@ -188,8 +188,17 @@ export default function AccommodationDetailPage() {
           </Link>
 
           <div className="mt-5 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-800">
-              {image ? <img src={image} alt={getAccommodationTitle(detail)} className="h-[420px] w-full object-cover" /> : <div className="flex h-[420px] items-center justify-center text-slate-500">Sin imagen</div>}
+            <div className="overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+              {image ? (
+                <img src={image} alt={getAccommodationTitle(detail)} className="h-[420px] w-full object-cover" />
+              ) : (
+                <div className="flex h-[420px] flex-col items-center justify-center gap-4 text-slate-500">
+                  <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                    <img src={logo} alt="Alojamiento JJ" className="h-full w-full object-contain p-4" />
+                  </span>
+                  <span className="text-sm font-bold uppercase tracking-widest">Sucursal</span>
+                </div>
+              )}
             </div>
             <div className="flex flex-col justify-center">
               <p className="text-sm font-bold uppercase text-indigo-600">Detalle del alojamiento</p>
