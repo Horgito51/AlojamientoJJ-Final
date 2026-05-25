@@ -90,7 +90,7 @@ export default function SimulatedPaymentModal({ isOpen, total = 0, onClose, onCo
               Cancelar
             </button>
             <button className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500">
-              Simular pago y reservar
+              Pagar y reservar
             </button>
           </div>
         </form>
