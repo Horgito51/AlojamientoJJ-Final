@@ -6,6 +6,7 @@ import { buildFormFromRow, buildInitialForm, coercePayload, getFieldLabel, getOp
 import { getErrorMessage, showError, showSuccess } from '../../utils/sweetAlert'
 import { useCloudinaryUpload } from '../../hooks/useCloudinaryUpload'
 import { EMAIL_REGEX, PHONE_10_REGEX, isAdult, validateEcuadorIdentification } from '../../utils/validation'
+import ImagePreviewModal from '../../components/admin/ImagePreviewModal'
 
 export default function AdminModuleFormPage() {
   const { moduleKey, recordId } = useParams()
@@ -21,6 +22,7 @@ export default function AdminModuleFormPage() {
   const [error, setError] = useState('')
   const [imageFiles, setImageFiles] = useState({})
   const [imagePreviews, setImagePreviews] = useState({})
+  const [imagePreviewModal, setImagePreviewModal] = useState(null)
   const previewUrlsRef = useRef({})
   const { upload, uploading, uploadError } = useCloudinaryUpload()
 
@@ -236,11 +238,17 @@ export default function AdminModuleFormPage() {
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 file:mr-3 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           />
           {(preview || existingUrl) && (
-            <img
-              src={preview || existingUrl}
-              alt="Preview"
-              className="h-32 w-48 rounded-md border border-slate-200 object-cover dark:border-slate-700"
-            />
+            <button
+              type="button"
+              onClick={() => setImagePreviewModal({ images: [preview || existingUrl], index: 0, title: getFieldLabel(field) })}
+              className="group w-fit overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950"
+            >
+              <img
+                src={preview || existingUrl}
+                alt="Preview"
+                className="h-32 w-48 object-cover transition group-hover:scale-[1.03]"
+              />
+            </button>
           )}
         </div>
       )
@@ -249,6 +257,11 @@ export default function AdminModuleFormPage() {
     if (field.type === 'imageList') {
       const existingImages = Array.isArray(form[field.name]) ? form[field.name] : []
       const pendingImages = imageFiles[field.name] || []
+      const existingUrls = existingImages
+        .map((image) => image?.urlImagen ?? image?.UrlImagen ?? image?.url ?? image?.Url ?? image)
+        .filter(Boolean)
+      const pendingUrls = pendingImages.map((item) => item.previewUrl).filter(Boolean)
+      const galleryUrls = existingUrls.concat(pendingUrls)
 
       return (
         <div className="rounded-lg border border-dashed border-slate-300 p-3 dark:border-slate-700">
@@ -267,7 +280,13 @@ export default function AdminModuleFormPage() {
                 const url = image?.urlImagen ?? image?.UrlImagen ?? image?.url ?? image?.Url ?? image
                 return (
                   <div key={`${url}-${index}`} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
-                    <img src={url} alt={`Imagen ${index + 1}`} className="h-32 w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImagePreviewModal({ images: galleryUrls, index, title: getFieldLabel(field) })}
+                      className="group block w-full overflow-hidden"
+                    >
+                      <img src={url} alt={`Imagen ${index + 1}`} className="h-32 w-full object-cover transition group-hover:scale-[1.03]" />
+                    </button>
                     <div className="flex items-center justify-between gap-2 px-2 py-2 text-xs text-slate-600 dark:text-slate-300">
                       <span>{index === 0 ? 'Principal' : `Imagen ${index + 1}`}</span>
                       <button type="button" onClick={() => removeExistingImage(field.name, index)} className="rounded border border-red-200 px-2 py-1 font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/70 dark:hover:bg-red-950/40">
@@ -279,7 +298,13 @@ export default function AdminModuleFormPage() {
               })}
               {pendingImages.map((item, index) => (
                 <div key={item.id} className="relative overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50 dark:border-indigo-900/70 dark:bg-indigo-950/30">
-                  <img src={item.previewUrl} alt={`Nueva imagen ${index + 1}`} className="h-32 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImagePreviewModal({ images: galleryUrls, index: existingUrls.length + index, title: getFieldLabel(field) })}
+                    className="group block w-full overflow-hidden"
+                  >
+                    <img src={item.previewUrl} alt={`Nueva imagen ${index + 1}`} className="h-32 w-full object-cover transition group-hover:scale-[1.03]" />
+                  </button>
                   <div className="flex items-center justify-between gap-2 px-2 py-2 text-xs text-indigo-700 dark:text-indigo-200">
                     <span>Nueva imagen</span>
                     <button type="button" onClick={() => removePendingImage(field.name, item.id)} className="rounded border border-red-200 bg-white px-2 py-1 font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/70 dark:bg-slate-950 dark:hover:bg-red-950/40">
@@ -513,6 +538,14 @@ export default function AdminModuleFormPage() {
             </Link>
           </div>
         </form>
+      )}
+      {imagePreviewModal && (
+        <ImagePreviewModal
+          images={imagePreviewModal.images}
+          initialIndex={imagePreviewModal.index}
+          title={imagePreviewModal.title}
+          onClose={() => setImagePreviewModal(null)}
+        />
       )}
     </div>
   )

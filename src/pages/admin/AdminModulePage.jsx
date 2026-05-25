@@ -8,6 +8,7 @@ import { getActionLabel, getFieldLabel, getFieldValueLabel, getStatusTone, isSta
 import { confirmDelete, getErrorMessage, showError, showSuccess } from '../../utils/sweetAlert'
 import PaymentModal from '../../components/common/PaymentModal'
 import { getHttpErrorMessage } from '../../utils/accommodation'
+import ImagePreviewModal from '../../components/admin/ImagePreviewModal'
 
 const iconPaths = {
   view: 'M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12Zm9.75 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
@@ -73,17 +74,30 @@ const getImageUrls = (row) => {
 function ImageCellCarousel({ row }) {
   const urls = getImageUrls(row)
   const [index, setIndex] = useState(0)
+  const [preview, setPreview] = useState(null)
 
   if (urls.length === 0) return <span className="text-xs text-slate-500">Sin imagen</span>
-  if (urls.length === 1) return <img src={urls[0]} alt="Imagen principal" className="h-10 w-14 rounded object-cover" />
+  if (urls.length === 1) {
+    return (
+      <>
+        <button type="button" onClick={() => setPreview({ images: urls, index: 0 })} className="block overflow-hidden rounded">
+          <img src={urls[0]} alt="Imagen principal" className="h-10 w-14 object-cover transition hover:scale-[1.04]" />
+        </button>
+        {preview && <ImagePreviewModal images={preview.images} initialIndex={preview.index} title="Imagen" onClose={() => setPreview(null)} />}
+      </>
+    )
+  }
 
   const goPrevious = () => setIndex((current) => (current - 1 + urls.length) % urls.length)
   const goNext = () => setIndex((current) => (current + 1) % urls.length)
   const safeIndex = Math.min(index, urls.length - 1)
 
   return (
+    <>
     <div className="admin-image-carousel">
-      <img src={urls[safeIndex]} alt={`Imagen ${safeIndex + 1}`} className="admin-image-carousel-img" />
+      <button type="button" onClick={() => setPreview({ images: urls, index: safeIndex })} className="admin-image-carousel-open" aria-label={`Ver imagen ${safeIndex + 1} en grande`}>
+        <img src={urls[safeIndex]} alt={`Imagen ${safeIndex + 1}`} className="admin-image-carousel-img" />
+      </button>
       <button type="button" className="admin-image-carousel-btn" onClick={goPrevious} aria-label="Imagen anterior">
         ‹
       </button>
@@ -92,6 +106,8 @@ function ImageCellCarousel({ row }) {
       </button>
       <span className="admin-image-carousel-label">Imagenes {safeIndex + 1}/{urls.length}</span>
     </div>
+    {preview && <ImagePreviewModal images={preview.images} initialIndex={preview.index} title="Imagen" onClose={() => setPreview(null)} />}
+    </>
   )
 }
 
