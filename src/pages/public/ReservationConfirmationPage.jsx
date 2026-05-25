@@ -9,7 +9,6 @@ export default function ReservationConfirmationPage() {
 
   const code = getValue(reserva, ['codigoReserva', 'CodigoReserva'], reservaGuid)
   const total = getValue(reserva, ['totalReserva', 'TotalReserva'], draft?.totals?.total)
-  const pending = getValue(reserva, ['saldoPendiente', 'SaldoPendiente'], total)
   const status = getValue(reserva, ['estadoReserva', 'EstadoReserva'], 'PENDIENTE')
 
   return (
@@ -31,13 +30,9 @@ export default function ReservationConfirmationPage() {
             <p className="text-xs text-slate-500">Estado</p>
             <p className="mt-1 font-semibold">{status}</p>
           </div>
-          <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-950">
+          <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-950 sm:col-span-2">
             <p className="text-xs text-slate-500">Total</p>
             <p className="mt-1 font-semibold">{formatMoney(total)}</p>
-          </div>
-          <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-950">
-            <p className="text-xs text-slate-500">Saldo pendiente</p>
-            <p className="mt-1 font-semibold">{formatMoney(pending)}</p>
           </div>
         </div>
 
