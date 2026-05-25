@@ -63,6 +63,7 @@ const FIELD_LABELS = {
   imagenPrincipalUrl: 'Imagen principal',
   imagenSecundariaUrl: 'Imagen secundaria',
   imagenUrl: 'Imagen',
+  imagenes: 'Imagenes',
   url: 'Imagen',
   idCliente: 'Cliente',
   idFactura: 'Factura',
@@ -158,6 +159,7 @@ export const getActionLabel = (action) => ACTION_LABELS[action] || humanizeKey(a
 
 export const readValue = (row, key) => {
   if (!row || !key) return ''
+  if (key === 'imagenes') return row.imagenes ?? row.Imagenes ?? []
   if (key === 'imagenUrl') return row.imagenUrl ?? row.ImagenUrl ?? row.url ?? row.Url ?? ''
   if (key === 'url') return row.url ?? row.Url ?? row.imagenUrl ?? row.ImagenUrl ?? ''
   if (key === 'imagenPrincipalUrl') {
@@ -213,7 +215,7 @@ export const resolveId = (row, module) => {
 export const buildInitialForm = (module) => {
   const values = {}
   for (const field of module.fields || []) {
-    values[field.name] = field.defaultValue ?? ''
+    values[field.name] = field.type === 'imageList' ? [] : field.defaultValue ?? ''
   }
   for (const [key, value] of Object.entries(module.defaults || {})) {
     values[key] = typeof value === 'function' ? value() : value
@@ -225,6 +227,12 @@ export const buildFormFromRow = (module, row) => {
   const values = buildInitialForm(module)
   for (const field of module.fields || []) {
     const value = readValue(row, field.name)
+    if (field.type === 'imageList') {
+      const images = normalizeImageList(value)
+      values[field.name] = images.length ? images : normalizeImageList([readValue(row, 'imagenPrincipalUrl')].filter(Boolean))
+      continue
+    }
+
     values[field.name] = field.type === 'date' && value
       ? String(value).slice(0, 10)
       : field.name === 'roles' && Array.isArray(value)
@@ -232,6 +240,23 @@ export const buildFormFromRow = (module, row) => {
       : value
   }
   return values
+}
+
+const normalizeImageList = (value) => {
+  const images = Array.isArray(value) ? value : Array.isArray(value?.$values) ? value.$values : []
+  return images
+    .map((image, index) => {
+      const url = typeof image === 'string' ? image : image?.urlImagen ?? image?.UrlImagen ?? image?.url ?? image?.Url ?? ''
+      if (!url) return null
+      return {
+        imagenGuid: image?.imagenGuid || image?.ImagenGuid || '00000000-0000-0000-0000-000000000000',
+        urlImagen: url,
+        descripcion: image?.descripcion || image?.Descripcion || '',
+        orden: Number(image?.orden ?? image?.Orden ?? index + 1),
+        esPrincipal: index === 0 ? true : Boolean(image?.esPrincipal ?? image?.EsPrincipal),
+      }
+    })
+    .filter(Boolean)
 }
 
 const toIsoDateTime = (value) => {
@@ -262,6 +287,7 @@ export const coercePayload = (values, module, mode) => {
       }
     }
     if (field.type === 'date') payload[field.name] = toIsoDateTime(payload[field.name])
+    if (field.type === 'imageList') payload[field.name] = Array.isArray(payload[field.name]) ? payload[field.name] : []
   }
   for (const [key, value] of Object.entries(module.defaults || {})) {
     payload[key] = typeof value === 'function' ? value() : value

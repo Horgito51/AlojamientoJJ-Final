@@ -74,26 +74,23 @@ function ImageCellCarousel({ row }) {
   const urls = getImageUrls(row)
   const [index, setIndex] = useState(0)
 
-  useEffect(() => {
-    setIndex(0)
-  }, [row])
-
   if (urls.length === 0) return <span className="text-xs text-slate-500">Sin imagen</span>
   if (urls.length === 1) return <img src={urls[0]} alt="Imagen principal" className="h-10 w-14 rounded object-cover" />
 
   const goPrevious = () => setIndex((current) => (current - 1 + urls.length) % urls.length)
   const goNext = () => setIndex((current) => (current + 1) % urls.length)
+  const safeIndex = Math.min(index, urls.length - 1)
 
   return (
     <div className="admin-image-carousel">
-      <img src={urls[index]} alt={`Imagen ${index + 1}`} className="admin-image-carousel-img" />
+      <img src={urls[safeIndex]} alt={`Imagen ${safeIndex + 1}`} className="admin-image-carousel-img" />
       <button type="button" className="admin-image-carousel-btn" onClick={goPrevious} aria-label="Imagen anterior">
         ‹
       </button>
       <button type="button" className="admin-image-carousel-btn" onClick={goNext} aria-label="Siguiente imagen">
         ›
       </button>
-      <span className="admin-image-carousel-label">Imagenes {index + 1}/{urls.length}</span>
+      <span className="admin-image-carousel-label">Imagenes {safeIndex + 1}/{urls.length}</span>
     </div>
   )
 }
@@ -246,7 +243,7 @@ export default function AdminModulePage() {
   const getRowId = (row) => resolveId(row, module)
   const getColumnValue = (row, column) => {
     const value = readValue(row, column)
-    if ((column === 'imagenUrl' || column === 'url' || column === 'imagenPrincipalUrl') && value) {
+    if (column === 'imagenes' || ((column === 'imagenUrl' || column === 'url' || column === 'imagenPrincipalUrl') && value)) {
       return <ImageCellCarousel row={row} />
     }
     const field = module.fields?.find((item) => item.name === column)

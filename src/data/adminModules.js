@@ -161,30 +161,50 @@ const numberWithDefault = (name, defaultValue, required = true) => ({ name, type
 const money = (name, required = true) => ({ name, type: 'number', step: '0.01', required })
 const date = (name) => ({ name, type: 'date', required: true })
 const checkbox = (name, defaultValue = false) => ({ name, type: 'checkbox', defaultValue })
-const image = (name, required = false) => ({ name, type: 'image', required })
+const imageList = (name = 'imagenes', required = false) => ({ name, type: 'imageList', required, layout: 'wide' })
 
 const imagePayload = (payload) => {
   const existingImages = Array.isArray(payload.imagenes) ? payload.imagenes : Array.isArray(payload.Imagenes) ? payload.Imagenes : []
   const principalUrl = payload.imagenPrincipalUrl || payload.urlImagen || payload.imagenUrl || ''
   const secondaryUrls = [payload.imagenSecundariaUrl].filter(Boolean)
-  const imagenes = principalUrl || secondaryUrls.length
-    ? [
-        ...(principalUrl ? [{
-          imagenGuid: payload.imagenGuid || payload.ImagenGuid || '00000000-0000-0000-0000-000000000000',
-          urlImagen: principalUrl,
-          descripcion: payload.descripcionImagen || payload.descripcionCorta || payload.descripcion || '',
-          orden: 1,
-          esPrincipal: true,
-        }] : []),
-        ...secondaryUrls.map((url, index) => ({
-          imagenGuid: '00000000-0000-0000-0000-000000000000',
-          urlImagen: url,
-          descripcion: payload.descripcionImagen || payload.descripcion || '',
-          orden: index + 2,
-          esPrincipal: false,
-        })),
-      ]
-    : existingImages
+  const normalizedExistingImages = existingImages
+    .map((image, index) => {
+      const url = typeof image === 'string' ? image : image?.urlImagen ?? image?.UrlImagen ?? image?.url ?? image?.Url ?? ''
+      if (!url) return null
+      return {
+        imagenGuid: image?.imagenGuid || image?.ImagenGuid || '00000000-0000-0000-0000-000000000000',
+        urlImagen: url,
+        descripcion: image?.descripcion || image?.Descripcion || payload.descripcionImagen || payload.descripcionCorta || payload.descripcion || '',
+        orden: Number(image?.orden ?? image?.Orden ?? index + 1),
+        esPrincipal: index === 0 ? true : Boolean(image?.esPrincipal ?? image?.EsPrincipal),
+      }
+    })
+    .filter(Boolean)
+
+  const imagenes = normalizedExistingImages.length
+    ? normalizedExistingImages.map((image, index) => ({
+        ...image,
+        orden: index + 1,
+        esPrincipal: index === 0,
+      }))
+    : principalUrl || secondaryUrls.length
+      ? [
+          ...(principalUrl ? [{
+            imagenGuid: payload.imagenGuid || payload.ImagenGuid || '00000000-0000-0000-0000-000000000000',
+            urlImagen: principalUrl,
+            descripcion: payload.descripcionImagen || payload.descripcionCorta || payload.descripcion || '',
+            orden: 1,
+            esPrincipal: true,
+          }] : []),
+          ...secondaryUrls.map((url, index) => ({
+            imagenGuid: '00000000-0000-0000-0000-000000000000',
+            urlImagen: url,
+            descripcion: payload.descripcionImagen || payload.descripcion || '',
+            orden: index + 2,
+            esPrincipal: false,
+          })),
+        ]
+      : []
 
   const rest = { ...payload }
   delete rest.imagenPrincipalUrl
@@ -208,11 +228,11 @@ export const adminModules = {
     title: 'Sucursales',
     endpoint: ENDPOINTS.INTERNAL.SUCURSALES,
     idKeys: ['idSucursal', 'IdSucursal'],
-    columns: ['imagenPrincipalUrl', 'codigoSucursal', 'nombreSucursal', 'ciudad', 'telefono', 'estadoSucursal'],
+    columns: ['imagenes', 'codigoSucursal', 'nombreSucursal', 'ciudad', 'telefono', 'estadoSucursal'],
     fields: [
       text('codigoSucursal'),
       text('nombreSucursal'),
-      image('imagenPrincipalUrl', false),
+      imageList('imagenes', false),
       textarea('descripcionSucursal'),
       textarea('descripcionCorta'),
       select('tipoAlojamiento', accommodationTypes, 'hotel'),
@@ -244,12 +264,11 @@ export const adminModules = {
     title: 'Tipos de habitacion',
     endpoint: ENDPOINTS.INTERNAL.TIPOS_HABITACION,
     idKeys: ['idTipoHabitacion', 'IdTipoHabitacion'],
-    columns: ['imagenPrincipalUrl', 'codigoTipoHabitacion', 'nombreTipoHabitacion', 'capacidadTotal', 'tipoCama', 'estadoTipoHabitacion'],
+    columns: ['imagenes', 'codigoTipoHabitacion', 'nombreTipoHabitacion', 'capacidadTotal', 'tipoCama', 'estadoTipoHabitacion'],
     fields: [
       text('codigoTipoHabitacion'),
       text('nombreTipoHabitacion'),
-      image('imagenPrincipalUrl', false),
-      image('imagenSecundariaUrl', false),
+      imageList('imagenes', false),
       textarea('descripcion'),
       number('capacidadAdultos'),
       number('capacidadNinos'),

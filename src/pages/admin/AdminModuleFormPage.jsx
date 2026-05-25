@@ -35,10 +35,15 @@ export default function AdminModuleFormPage() {
   const relationFields = useMemo(() => visibleFields.filter((field) => field.type === 'relation'), [visibleFields])
   const loadingRelations = relationFields.some((field) => !relationOptions[field.name])
 
+  const revokePreviewValue = (value) => {
+    if (Array.isArray(value)) value.forEach((url) => URL.revokeObjectURL(url))
+    else if (value) URL.revokeObjectURL(value)
+  }
+
   useEffect(() => {
     const previewUrls = previewUrlsRef.current
     return () => {
-      Object.values(previewUrls).forEach((url) => URL.revokeObjectURL(url))
+      Object.values(previewUrls).forEach(revokePreviewValue)
     }
   }, [])
 
@@ -136,7 +141,7 @@ export default function AdminModuleFormPage() {
     if (!file) return
 
     if (previewUrlsRef.current[fieldName]) {
-      URL.revokeObjectURL(previewUrlsRef.current[fieldName])
+      revokePreviewValue(previewUrlsRef.current[fieldName])
     }
 
     const previewUrl = URL.createObjectURL(file)
@@ -144,6 +149,46 @@ export default function AdminModuleFormPage() {
 
     setImageFiles((prev) => ({ ...prev, [fieldName]: file }))
     setImagePreviews((prev) => ({ ...prev, [fieldName]: previewUrl }))
+  }
+
+  const handleImageListChange = (fieldName, event) => {
+    const files = Array.from(event.target.files || [])
+    if (files.length === 0) return
+
+    const items = files.map((file) => ({
+      id: `${file.name}-${file.lastModified}-${crypto.randomUUID?.() || Date.now()}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }))
+
+    previewUrlsRef.current[fieldName] = [
+      ...(Array.isArray(previewUrlsRef.current[fieldName]) ? previewUrlsRef.current[fieldName] : []),
+      ...items.map((item) => item.previewUrl),
+    ]
+
+    setImageFiles((prev) => ({ ...prev, [fieldName]: [...(prev[fieldName] || []), ...items] }))
+    event.target.value = ''
+  }
+
+  const removeExistingImage = (fieldName, index) => {
+    setForm((current) => ({
+      ...current,
+      [fieldName]: (Array.isArray(current[fieldName]) ? current[fieldName] : []).filter((_, itemIndex) => itemIndex !== index),
+    }))
+  }
+
+  const removePendingImage = (fieldName, imageId) => {
+    setImageFiles((prev) => {
+      const removed = (prev[fieldName] || []).find((item) => item.id === imageId)
+      if (removed?.previewUrl) {
+        URL.revokeObjectURL(removed.previewUrl)
+        previewUrlsRef.current[fieldName] = (previewUrlsRef.current[fieldName] || []).filter((url) => url !== removed.previewUrl)
+      }
+      return {
+        ...prev,
+        [fieldName]: (prev[fieldName] || []).filter((item) => item.id !== imageId),
+      }
+    })
   }
 
   const renderField = (field) => {
@@ -196,6 +241,56 @@ export default function AdminModuleFormPage() {
               alt="Preview"
               className="h-32 w-48 rounded-md border border-slate-200 object-cover dark:border-slate-700"
             />
+          )}
+        </div>
+      )
+    }
+
+    if (field.type === 'imageList') {
+      const existingImages = Array.isArray(form[field.name]) ? form[field.name] : []
+      const pendingImages = imageFiles[field.name] || []
+
+      return (
+        <div className="rounded-lg border border-dashed border-slate-300 p-3 dark:border-slate-700">
+          <input
+            id={`file-${field.name}`}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => handleImageListChange(field.name, e)}
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 file:mr-3 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+          />
+
+          {(existingImages.length > 0 || pendingImages.length > 0) ? (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {existingImages.map((image, index) => {
+                const url = image?.urlImagen ?? image?.UrlImagen ?? image?.url ?? image?.Url ?? image
+                return (
+                  <div key={`${url}-${index}`} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                    <img src={url} alt={`Imagen ${index + 1}`} className="h-32 w-full object-cover" />
+                    <div className="flex items-center justify-between gap-2 px-2 py-2 text-xs text-slate-600 dark:text-slate-300">
+                      <span>{index === 0 ? 'Principal' : `Imagen ${index + 1}`}</span>
+                      <button type="button" onClick={() => removeExistingImage(field.name, index)} className="rounded border border-red-200 px-2 py-1 font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/70 dark:hover:bg-red-950/40">
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+              {pendingImages.map((item, index) => (
+                <div key={item.id} className="relative overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50 dark:border-indigo-900/70 dark:bg-indigo-950/30">
+                  <img src={item.previewUrl} alt={`Nueva imagen ${index + 1}`} className="h-32 w-full object-cover" />
+                  <div className="flex items-center justify-between gap-2 px-2 py-2 text-xs text-indigo-700 dark:text-indigo-200">
+                    <span>Nueva imagen</span>
+                    <button type="button" onClick={() => removePendingImage(field.name, item.id)} className="rounded border border-red-200 bg-white px-2 py-1 font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/70 dark:bg-slate-950 dark:hover:bg-red-950/40">
+                      Quitar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-slate-500">No hay imagenes cargadas.</p>
           )}
         </div>
       )
@@ -268,7 +363,7 @@ export default function AdminModuleFormPage() {
       let enrichedForm = { ...form }
       const requiredError = visibleFields.find((field) => {
         if (!field.required) return false
-        if (field.type === 'checkbox' || field.type === 'image') return false
+        if (field.type === 'checkbox' || field.type === 'image' || field.type === 'imageList') return false
         const value = enrichedForm[field.name]
         if (field.multiple) return !Array.isArray(value) || value.length === 0
         return value === undefined || value === null || String(value).trim() === ''
@@ -326,6 +421,40 @@ export default function AdminModuleFormPage() {
             return
           }
         }
+      }
+
+      const imageListFields = visibleFields.filter((f) => f.type === 'imageList')
+      for (const field of imageListFields) {
+        const existingImages = Array.isArray(enrichedForm[field.name]) ? enrichedForm[field.name] : []
+        const pendingImages = imageFiles[field.name] || []
+
+        if (field.required && existingImages.length === 0 && pendingImages.length === 0) {
+          setError(`Debe cargar al menos una imagen para "${getFieldLabel(field)}".`)
+          setSaving(false)
+          return
+        }
+
+        const uploadedImages = []
+        for (const item of pendingImages) {
+          try {
+            const url = await upload(item.file)
+            uploadedImages.push({
+              imagenGuid: '00000000-0000-0000-0000-000000000000',
+              urlImagen: url,
+              descripcion: '',
+            })
+          } catch (err) {
+            setError(err.message)
+            setSaving(false)
+            return
+          }
+        }
+
+        enrichedForm[field.name] = [...existingImages, ...uploadedImages].map((image, index) => ({
+          ...image,
+          orden: index + 1,
+          esPrincipal: index === 0,
+        }))
       }
 
       const payload = coercePayload(enrichedForm, module, isEdit ? 'update' : 'create')
