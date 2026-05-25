@@ -8,18 +8,33 @@ const stripEmpty = (params = {}) =>
     Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
   )
 
+const firstValue = (source, keys, fallback = undefined) => {
+  for (const key of keys) {
+    const value = source?.[key]
+    if (value !== undefined && value !== null) return value
+  }
+  return fallback
+}
+
+const normalizeBoolean = (value) => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') return value.toLowerCase() === 'true'
+  return Boolean(value)
+}
+
 export const normalizePagedResponse = (response) => {
   const data = unwrapData(response)
-  const items = normalizeList(data)
+  const pageData = normalizeEntity(data)
+  const items = normalizeList(pageData)
 
   return {
     items,
-    pagina: Number(data?.pagina ?? data?.Pagina ?? 1),
-    limite: Number(data?.limite ?? data?.Limite ?? (items.length || 10)),
-    totalResultados: Number(data?.totalResultados ?? data?.TotalResultados ?? items.length),
-    totalPaginas: Math.max(1, Number(data?.totalPaginas ?? data?.TotalPaginas ?? 1)),
-    tieneSiguiente: Boolean(data?.tieneSiguiente ?? data?.TieneSiguiente ?? false),
-    tieneAnterior: Boolean(data?.tieneAnterior ?? data?.TieneAnterior ?? false),
+    pagina: Number(firstValue(pageData, ['pagina', 'Pagina', 'pageNumber', 'PageNumber'], 1)),
+    limite: Number(firstValue(pageData, ['limite', 'Limite', 'pageSize', 'PageSize'], items.length || 10)),
+    totalResultados: Number(firstValue(pageData, ['totalResultados', 'TotalResultados', 'totalCount', 'TotalCount'], items.length)),
+    totalPaginas: Math.max(1, Number(firstValue(pageData, ['totalPaginas', 'TotalPaginas', 'totalPages', 'TotalPages'], 1))),
+    tieneSiguiente: normalizeBoolean(firstValue(pageData, ['tieneSiguiente', 'TieneSiguiente', 'hasNext', 'HasNext'], false)),
+    tieneAnterior: normalizeBoolean(firstValue(pageData, ['tieneAnterior', 'TieneAnterior', 'hasPrevious', 'HasPrevious'], false)),
   }
 }
 

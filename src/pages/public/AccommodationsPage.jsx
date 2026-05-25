@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { accommodationService } from '../../api/accommodationService'
 import SucursalCard from '../../components/common/SucursalCard'
-import { buildSearchParamsFromUrl, getHttpErrorMessage, hydrateSearchDates, loadStoredSearch, matchesAccommodationDestination, persistSearchState } from '../../utils/accommodation'
+import { buildSearchParamsFromUrl, getHttpErrorMessage, hydrateSearchDates, loadStoredSearch, persistSearchState } from '../../utils/accommodation'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -18,11 +18,8 @@ export default function AccommodationsPage() {
   const [result, setResult] = useState({ items: [], pagina: 1, totalPaginas: 1, totalResultados: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const displayedItems = useMemo(
-    () => result.items.filter((item) => matchesAccommodationDestination(item, initial.destino)),
-    [result.items, initial.destino]
-  )
-  const displayedTotal = initial.destino ? displayedItems.length : (result.totalResultados || result.items.length)
+  const displayedItems = result.items
+  const displayedTotal = result.totalResultados || result.items.length
 
   useEffect(() => {
     queueMicrotask(() => setForm(initial))
@@ -170,10 +167,10 @@ export default function AccommodationsPage() {
         )}
 
         <div className="mt-8 flex justify-center gap-3">
-          <button disabled={!result.tieneAnterior && result.pagina <= 1} onClick={() => goToPage(Math.max(1, result.pagina - 1))} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700">
+          <button disabled={result.pagina <= 1} onClick={() => goToPage(Math.max(1, result.pagina - 1))} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700">
             Anterior
           </button>
-          <button disabled={!result.tieneSiguiente && result.pagina >= result.totalPaginas} onClick={() => goToPage(result.pagina + 1)} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700">
+          <button disabled={!result.tieneSiguiente || result.pagina >= result.totalPaginas} onClick={() => goToPage(result.pagina + 1)} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700">
             Siguiente
           </button>
         </div>

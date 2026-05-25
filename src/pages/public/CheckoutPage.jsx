@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { reservaService } from '../../api/reservaService'
+import SimulatedPaymentModal from '../../components/common/SimulatedPaymentModal'
 import { CHECKOUT_STORAGE_KEY, formatMoney, getHttpErrorMessage, getValue, toApiDateTime } from '../../utils/accommodation'
 
 const emptyClient = {
@@ -28,12 +29,30 @@ export default function CheckoutPage() {
   })
   const [client, setClient] = useState(emptyClient)
   const [observaciones, setObservaciones] = useState('')
+  const [reservationPayload, setReservationPayload] = useState(null)
+  const [showPayment, setShowPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const canSubmit = useMemo(() => {
     return client.numeroIdentificacion && client.nombres && client.correo && client.telefono
   }, [client])
+
+  const buildReservationPayload = () => ({
+    sucursalGuid: draft.sucursalGuid,
+    fechaInicio: toApiDateTime(draft.search.fechaInicio, '14:00:00'),
+    fechaFin: toApiDateTime(draft.search.fechaFin, '12:00:00'),
+    origenCanalReserva: 'WEB',
+    observaciones: observaciones.trim(),
+    esWalkin: false,
+    cliente: client,
+    habitaciones: draft.rooms.map((room) => ({
+      tipoHabitacionGuid: room.tipoHabitacionGuid,
+      numHabitaciones: Number(room.numHabitaciones || 1),
+      numAdultos: Number(room.numAdultos || draft.search.adultos || 1),
+      numNinos: Number(room.numNinos || draft.search.ninos || 0),
+    })),
+  })
 
   const submitReservation = async (event) => {
     event.preventDefault()
@@ -53,27 +72,18 @@ export default function CheckoutPage() {
       return
     }
 
+    setReservationPayload(buildReservationPayload())
+    setShowPayment(true)
+    setError('')
+  }
+
+  const confirmSimulatedPayment = async () => {
+    if (!reservationPayload) return
     setSubmitting(true)
     setError('')
 
-    const payload = {
-      sucursalGuid: draft.sucursalGuid,
-      fechaInicio: toApiDateTime(draft.search.fechaInicio, '14:00:00'),
-      fechaFin: toApiDateTime(draft.search.fechaFin, '12:00:00'),
-      origenCanalReserva: 'WEB',
-      observaciones: observaciones.trim(),
-      esWalkin: false,
-      cliente: client,
-      habitaciones: draft.rooms.map((room) => ({
-        tipoHabitacionGuid: room.tipoHabitacionGuid,
-        numHabitaciones: Number(room.numHabitaciones || 1),
-        numAdultos: Number(room.numAdultos || draft.search.adultos || 1),
-        numNinos: Number(room.numNinos || draft.search.ninos || 0),
-      })),
-    }
-
     try {
-      const created = await reservaService.createPublicReserva(payload)
+      const created = await reservaService.createPublicReserva(reservationPayload)
       sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
       navigate(`/reserva/${getValue(created, ['reservaGuid', 'ReservaGuid', 'id', 'Id'], 'confirmada')}`, {
         state: { reserva: created, draft },
@@ -81,6 +91,8 @@ export default function CheckoutPage() {
     } catch (err) {
       console.error('Public reservation error:', err?.response?.data || err)
       setError(getHttpErrorMessage(err, 'No se pudo crear la reserva.'))
+      setShowPayment(false)
+      throw err
     } finally {
       setSubmitting(false)
     }
@@ -146,7 +158,7 @@ export default function CheckoutPage() {
           </div>
 
           <button disabled={submitting} className="mt-6 w-full rounded-md bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
-            {submitting ? 'Creando reserva...' : 'Crear reserva'}
+            {submitting ? 'Creando reserva...' : 'Continuar al pago'}
           </button>
         </form>
 
@@ -173,6 +185,12 @@ export default function CheckoutPage() {
           </div>
         </aside>
       </div>
+      <SimulatedPaymentModal
+        isOpen={showPayment}
+        total={draft.totals.total}
+        onClose={() => setShowPayment(false)}
+        onConfirm={confirmSimulatedPayment}
+      />
     </main>
   )
 }
