@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-const getSearchText = (row) => {
+const getDefaultSearchText = (row) => {
   try {
     return JSON.stringify(row ?? {}).toLowerCase()
   } catch {
@@ -15,7 +15,7 @@ const getSortValue = (row, column) => {
   return String(value ?? '').toLowerCase()
 }
 
-export default function AdminDataTable({ columns, rows, getColumnLabel, getRowId, renderValue, renderActions }) {
+export default function AdminDataTable({ columns, rows, getColumnLabel, getRowId, renderValue, renderActions, getSearchText = getDefaultSearchText }) {
   const [search, setSearch] = useState('')
   const [pageLength, setPageLength] = useState(10)
   const [page, setPage] = useState(1)
@@ -33,7 +33,7 @@ export default function AdminDataTable({ columns, rows, getColumnLabel, getRowId
       if (first > second) return sort.direction === 'asc' ? 1 : -1
       return 0
     })
-  }, [rows, search, sort])
+  }, [getSearchText, rows, search, sort])
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageLength))
   const safePage = Math.min(page, totalPages)

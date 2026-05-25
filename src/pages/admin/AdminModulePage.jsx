@@ -59,6 +59,11 @@ const formatDate = (value) => {
 
 const fieldValue = (row, key, fallback = '') => readValue(row, key) || fallback
 const normalizeState = (value) => String(value ?? '').trim().toUpperCase()
+const getReservationGuid = (reservation) =>
+  fieldValue(reservation, 'guidReserva') ||
+  fieldValue(reservation, 'reservaGuid') ||
+  fieldValue(reservation, 'ReservaGuid') ||
+  fieldValue(reservation, 'GuidReserva')
 
 const getPersonName = (person) => {
   const fullName = [
@@ -269,6 +274,21 @@ export default function AdminModulePage() {
   }
 
   const getRowId = (row) => resolveId(row, module)
+  const getTableSearchText = (row) => {
+    const baseText = JSON.stringify(row ?? {})
+    if (moduleKey !== 'reservas') return baseText.toLowerCase()
+
+    const clienteLabel = getColumnValue(row, 'idCliente')
+    const sucursalLabel = getColumnValue(row, 'idSucursal')
+    return [
+      baseText,
+      getReservationGuid(row),
+      fieldValue(row, 'codigoReserva'),
+      typeof clienteLabel === 'string' ? clienteLabel : '',
+      typeof sucursalLabel === 'string' ? sucursalLabel : '',
+    ].join(' ').toLowerCase()
+  }
+
   const getColumnValue = (row, column) => {
     const value = readValue(row, column)
     if (column === 'imagenes' || ((column === 'imagenUrl' || column === 'url' || column === 'imagenPrincipalUrl') && value)) {
@@ -537,6 +557,7 @@ export default function AdminModulePage() {
           getRowId={getRowId}
           renderValue={getColumnValue}
           renderActions={renderActions}
+          getSearchText={getTableSearchText}
         />
       )}
 
@@ -630,6 +651,7 @@ function ActionButton({ action, row, onRun }) {
 function ReservationDetailModal({ reservation, client, loading, onClose, renderStatus }) {
   const currency = fieldValue(reservation, 'moneda', 'USD')
   const rooms = asArray(reservation.habitaciones ?? reservation.Habitaciones)
+  const reservaGuid = getReservationGuid(reservation)
   const code = fieldValue(reservation, 'codigoReserva', fieldValue(reservation, 'CodigoReserva', `Reserva ${fieldValue(reservation, 'idReserva')}`))
   const clienteGuid = fieldValue(client, 'clienteGuid') || fieldValue(reservation, 'clienteGuid') || fieldValue(reservation, 'ClienteGuid')
   const clienteName = client ? getPersonName(client) : fieldValue(reservation, 'clienteNombre', fieldValue(reservation, 'nombreCliente', 'Sin cliente'))
@@ -670,6 +692,10 @@ function ReservationDetailModal({ reservation, client, loading, onClose, renderS
             <div className="invoice-detail-card md:col-span-2">
               <span className="invoice-detail-label">Estado</span>
               <div className="mt-2">{renderStatus(fieldValue(reservation, 'estadoReserva'))}</div>
+            </div>
+            <div className="invoice-detail-card md:col-span-2">
+              <span className="invoice-detail-label">Reserva GUID</span>
+              <strong className="break-all">{reservaGuid || 'No disponible'}</strong>
             </div>
             <div className="invoice-detail-card md:col-span-2">
               <span className="invoice-detail-label">Cliente</span>
