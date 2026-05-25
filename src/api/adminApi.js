@@ -13,6 +13,11 @@ export const adminApi = {
     return normalizeEntity(data)
   },
 
+  async getUrl(url, params = {}) {
+    const { data } = await api.get(url, { params })
+    return normalizeEntity(data)
+  },
+
   async create(endpoint, payload) {
     const { data } = await api.post(endpoint.base ?? endpoint, payload)
     return normalizeEntity(data)

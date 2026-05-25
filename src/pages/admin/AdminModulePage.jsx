@@ -60,6 +60,15 @@ const formatDate = (value) => {
 const fieldValue = (row, key, fallback = '') => readValue(row, key) || fallback
 const normalizeState = (value) => String(value ?? '').trim().toUpperCase()
 
+const getPersonName = (person) => {
+  const fullName = [
+    fieldValue(person, 'nombres'),
+    fieldValue(person, 'apellidos'),
+  ].filter(Boolean).join(' ').trim()
+
+  return fullName || fieldValue(person, 'razonSocial') || fieldValue(person, 'correo') || 'Cliente sin nombre'
+}
+
 const getImageUrls = (row) => {
   const images = asArray(row?.imagenes ?? row?.Imagenes)
   const urlsFromCollection = images
@@ -189,6 +198,7 @@ export default function AdminModulePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reservationDetail, setReservationDetail] = useState(null)
+  const [reservationClient, setReservationClient] = useState(null)
   const [invoiceDetail, setInvoiceDetail] = useState(null)
   const [paymentDetail, setPaymentDetail] = useState(null)
   const [loadingReservationDetail, setLoadingReservationDetail] = useState(false)
@@ -308,9 +318,21 @@ export default function AdminModulePage() {
 
     setLoadingReservationDetail(true)
     setReservationDetail(row)
+    setReservationClient(null)
     try {
       const detail = await adminApi.get(ENDPOINTS.INTERNAL.RESERVAS, id)
-      setReservationDetail(detail || row)
+      const safeDetail = detail || row
+      setReservationDetail(safeDetail)
+
+      const clienteGuid = fieldValue(safeDetail, 'clienteGuid') || fieldValue(safeDetail, 'ClienteGuid')
+      const clienteId = fieldValue(safeDetail, 'idCliente') || fieldValue(row, 'idCliente')
+      const client = clienteGuid
+        ? await adminApi.getUrl(ENDPOINTS.PUBLIC.CLIENTES.byGuid(clienteGuid)).catch(() => null)
+        : clienteId
+          ? await adminApi.get(ENDPOINTS.INTERNAL.CLIENTES, clienteId).catch(() => null)
+          : null
+
+      setReservationClient(client)
     } catch {
       await showError('No se pudo cargar el detalle', 'Se mostrara la informacion disponible en la tabla.')
     } finally {
@@ -521,8 +543,12 @@ export default function AdminModulePage() {
       {reservationDetail && (
         <ReservationDetailModal
           reservation={reservationDetail}
+          client={reservationClient}
           loading={loadingReservationDetail}
-          onClose={() => setReservationDetail(null)}
+          onClose={() => {
+            setReservationDetail(null)
+            setReservationClient(null)
+          }}
           renderStatus={(value) => {
             const label = getFieldValueLabel(module.fields?.find((field) => field.name === 'estadoReserva'), value) || value
             const tone = getStatusTone(value, label)
@@ -601,10 +627,18 @@ function ActionButton({ action, row, onRun }) {
   )
 }
 
-function ReservationDetailModal({ reservation, loading, onClose, renderStatus }) {
+function ReservationDetailModal({ reservation, client, loading, onClose, renderStatus }) {
   const currency = fieldValue(reservation, 'moneda', 'USD')
   const rooms = asArray(reservation.habitaciones ?? reservation.Habitaciones)
   const code = fieldValue(reservation, 'codigoReserva', fieldValue(reservation, 'CodigoReserva', `Reserva ${fieldValue(reservation, 'idReserva')}`))
+  const clienteGuid = fieldValue(client, 'clienteGuid') || fieldValue(reservation, 'clienteGuid') || fieldValue(reservation, 'ClienteGuid')
+  const clienteName = client ? getPersonName(client) : fieldValue(reservation, 'clienteNombre', fieldValue(reservation, 'nombreCliente', 'Sin cliente'))
+  const clienteInfoItems = [
+    ['Identificacion', [fieldValue(client, 'tipoIdentificacion'), fieldValue(client, 'numeroIdentificacion')].filter(Boolean).join(' ') || 'No registrada'],
+    ['Correo', fieldValue(client, 'correo', 'No registrado')],
+    ['Telefono', fieldValue(client, 'telefono', 'No registrado')],
+    ['Cliente GUID', clienteGuid || 'No disponible'],
+  ]
   const summaryItems = [
     ['Subtotal', formatCurrency(fieldValue(reservation, 'subtotalReserva'), currency)],
     ['IVA', formatCurrency(fieldValue(reservation, 'valorIva'), currency)],
@@ -637,9 +671,9 @@ function ReservationDetailModal({ reservation, loading, onClose, renderStatus })
               <span className="invoice-detail-label">Estado</span>
               <div className="mt-2">{renderStatus(fieldValue(reservation, 'estadoReserva'))}</div>
             </div>
-            <div className="invoice-detail-card">
+            <div className="invoice-detail-card md:col-span-2">
               <span className="invoice-detail-label">Cliente</span>
-              <strong>{fieldValue(reservation, 'idCliente', 'Sin cliente')}</strong>
+              <strong>{clienteName}</strong>
             </div>
             <div className="invoice-detail-card">
               <span className="invoice-detail-label">Sucursal</span>
@@ -675,6 +709,27 @@ function ReservationDetailModal({ reservation, loading, onClose, renderStatus })
               </div>
             ))}
           </div>
+
+          <section className="mt-6">
+            <h3 className="text-base font-bold text-slate-950 dark:text-white">Informacion del cliente</h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-4">
+              <div className="invoice-detail-card md:col-span-2">
+                <span className="invoice-detail-label">Nombre completo</span>
+                <strong>{clienteName}</strong>
+              </div>
+              {clienteInfoItems.map(([label, value]) => (
+                <div key={label} className={label === 'Cliente GUID' ? 'invoice-detail-card md:col-span-2' : 'invoice-detail-card'}>
+                  <span className="invoice-detail-label">{label}</span>
+                  <strong className="break-all">{value}</strong>
+                </div>
+              ))}
+            </div>
+            {!client && !loading && (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+                No se pudo cargar el detalle completo del cliente; se muestra la informacion disponible en la reserva.
+              </p>
+            )}
+          </section>
 
           <section className="mt-6">
             <h3 className="text-base font-bold text-slate-950 dark:text-white">Habitaciones reservadas</h3>

@@ -114,6 +114,7 @@ export const ENDPOINTS = {
     CLIENTES: {
       base: `api/v1/public/clientes`,
       byEmail: (correo) => `api/v1/public/clientes/by-email?correo=${encodeURIComponent(correo)}`,
+      byGuid: (clienteGuid) => `api/v1/public/clientes/${clienteGuid}`,
     },
     RESERVAS: {
       base: `api/v1/public/reservas`,

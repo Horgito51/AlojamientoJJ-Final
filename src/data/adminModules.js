@@ -367,6 +367,8 @@ export const adminModules = {
     idKeys: ['idReserva', 'IdReserva'],
     columns: ['idCliente', 'idSucursal', 'fechaInicio', 'fechaFin', 'totalReserva', 'estadoReserva'],
     fields: [
+      { ...relation('idCliente', ENDPOINTS.INTERNAL.CLIENTES, ['idCliente', 'IdCliente', 'id'], ['nombres', 'apellidos', 'numeroIdentificacion'], true), modes: ['list', 'detail'] },
+      { ...relation('idSucursal', ENDPOINTS.INTERNAL.SUCURSALES, ['idSucursal', 'IdSucursal', 'id'], ['nombreSucursal', 'codigoSucursal'], true), modes: ['list', 'detail'] },
       { ...relation('clienteGuid', ENDPOINTS.INTERNAL.CLIENTES, ['clienteGuid', 'ClienteGuid', 'guidCliente', 'GuidCliente'], ['nombres', 'apellidos', 'numeroIdentificacion'], true, 'string'), modes: ['create'] },
       { ...relation('sucursalGuid', ENDPOINTS.INTERNAL.SUCURSALES, ['sucursalGuid', 'SucursalGuid', 'guidSucursal', 'GuidSucursal'], ['nombreSucursal', 'codigoSucursal'], true, 'string'), modes: ['create'] },
       { ...relation('tipoHabitacionGuid', ENDPOINTS.INTERNAL.TIPOS_HABITACION, ['tipoHabitacionGuid', 'TipoHabitacionGuid', 'guidTipoHabitacion', 'GuidTipoHabitacion'], ['nombreTipoHabitacion', 'codigoTipoHabitacion'], true, 'string'), modes: ['create'] },
