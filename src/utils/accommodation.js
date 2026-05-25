@@ -156,7 +156,7 @@ export const getRoomTypeName = (roomType) =>
   getValue(roomType, ['nombre', 'Nombre', 'nombreTipoHabitacion', 'NombreTipoHabitacion', 'tipo', 'Tipo'], 'Habitacion')
 
 export const getRoomTypePrice = (roomType) =>
-  Number(getValue(roomType, ['precioBase', 'PrecioBase', 'precioDesde', 'PrecioDesde', 'precio', 'Precio'], 0))
+  Number(getValue(roomType, ['precioNocheAplicado', 'PrecioNocheAplicado', 'precioPorNoche', 'PrecioPorNoche', 'precioDesde', 'PrecioDesde', 'precioBase', 'PrecioBase', 'precio', 'Precio'], 0))
 
 export const getRoomTypeAdults = (roomType) =>
   Number(getValue(roomType, ['capacidadAdultos', 'CapacidadAdultos', 'adultos', 'Adultos'], 1))

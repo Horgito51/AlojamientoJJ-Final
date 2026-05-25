@@ -188,8 +188,10 @@ export default function AdminModulePage() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reservationDetail, setReservationDetail] = useState(null)
   const [invoiceDetail, setInvoiceDetail] = useState(null)
   const [paymentDetail, setPaymentDetail] = useState(null)
+  const [loadingReservationDetail, setLoadingReservationDetail] = useState(false)
   const [loadingInvoiceDetail, setLoadingInvoiceDetail] = useState(false)
   const [loadingPaymentDetail, setLoadingPaymentDetail] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
@@ -300,6 +302,22 @@ export default function AdminModulePage() {
     }
   }
 
+  const openReservationDetail = async (row) => {
+    const id = getRowId(row)
+    if (!id) return
+
+    setLoadingReservationDetail(true)
+    setReservationDetail(row)
+    try {
+      const detail = await adminApi.get(ENDPOINTS.INTERNAL.RESERVAS, id)
+      setReservationDetail(detail || row)
+    } catch {
+      await showError('No se pudo cargar el detalle', 'Se mostrara la informacion disponible en la tabla.')
+    } finally {
+      setLoadingReservationDetail(false)
+    }
+  }
+
   const openInvoiceDetail = async (row) => {
     const id = getRowId(row)
     if (!id) return
@@ -364,6 +382,17 @@ export default function AdminModulePage() {
 
     return (
       <div className="flex flex-wrap justify-end gap-2">
+        {moduleKey === 'reservas' && (
+          <button
+            type="button"
+            onClick={() => openReservationDetail(row)}
+            className="admin-action-button admin-action-view"
+            title="Ver detalle de reserva"
+          >
+            <ActionIcon name="view" />
+            <span>Ver</span>
+          </button>
+        )}
         {moduleKey === 'facturas' && (
           <button
             type="button"
@@ -489,6 +518,24 @@ export default function AdminModulePage() {
         />
       )}
 
+      {reservationDetail && (
+        <ReservationDetailModal
+          reservation={reservationDetail}
+          loading={loadingReservationDetail}
+          onClose={() => setReservationDetail(null)}
+          renderStatus={(value) => {
+            const label = getFieldValueLabel(module.fields?.find((field) => field.name === 'estadoReserva'), value) || value
+            const tone = getStatusTone(value, label)
+            return (
+              <span className={`admin-status-badge admin-status-${tone}`}>
+                <span className="admin-status-dot" aria-hidden="true" />
+                {label || 'Sin estado'}
+              </span>
+            )
+          }}
+        />
+      )}
+
       {invoiceDetail && (
         <InvoiceDetailModal
           invoice={invoiceDetail}
@@ -551,6 +598,144 @@ function ActionButton({ action, row, onRun }) {
       <ActionIcon name={actionIconName(action)} />
       <span>{label}</span>
     </button>
+  )
+}
+
+function ReservationDetailModal({ reservation, loading, onClose, renderStatus }) {
+  const currency = fieldValue(reservation, 'moneda', 'USD')
+  const rooms = asArray(reservation.habitaciones ?? reservation.Habitaciones)
+  const code = fieldValue(reservation, 'codigoReserva', fieldValue(reservation, 'CodigoReserva', `Reserva ${fieldValue(reservation, 'idReserva')}`))
+  const summaryItems = [
+    ['Subtotal', formatCurrency(fieldValue(reservation, 'subtotalReserva'), currency)],
+    ['IVA', formatCurrency(fieldValue(reservation, 'valorIva'), currency)],
+    ['Descuento', formatCurrency(fieldValue(reservation, 'descuentoAplicado'), currency)],
+    ['Saldo pendiente', formatCurrency(fieldValue(reservation, 'saldoPendiente'), currency)],
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} aria-label="Cerrar detalle" />
+      <section className="relative z-10 flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Detalle de reserva</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">{code}</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Creada: {formatDate(fieldValue(reservation, 'fechaReservaUtc', fieldValue(reservation, 'fechaRegistroUtc')))}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="admin-icon-button" aria-label="Cerrar">
+            <ActionIcon name="cancel" />
+          </button>
+        </header>
+
+        <div className="overflow-y-auto px-6 py-5">
+          {loading && <div className="mb-4 rounded-lg bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200">Cargando detalle completo...</div>}
+
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="invoice-detail-card md:col-span-2">
+              <span className="invoice-detail-label">Estado</span>
+              <div className="mt-2">{renderStatus(fieldValue(reservation, 'estadoReserva'))}</div>
+            </div>
+            <div className="invoice-detail-card">
+              <span className="invoice-detail-label">Cliente</span>
+              <strong>{fieldValue(reservation, 'idCliente', 'Sin cliente')}</strong>
+            </div>
+            <div className="invoice-detail-card">
+              <span className="invoice-detail-label">Sucursal</span>
+              <strong>{fieldValue(reservation, 'idSucursal', 'Sin sucursal')}</strong>
+            </div>
+            <div className="invoice-detail-card">
+              <span className="invoice-detail-label">Entrada</span>
+              <strong>{formatDate(fieldValue(reservation, 'fechaInicio'))}</strong>
+            </div>
+            <div className="invoice-detail-card">
+              <span className="invoice-detail-label">Salida</span>
+              <strong>{formatDate(fieldValue(reservation, 'fechaFin'))}</strong>
+            </div>
+            <div className="invoice-detail-card">
+              <span className="invoice-detail-label">Canal</span>
+              <strong>{fieldValue(reservation, 'origenCanalReserva', 'No especificado')}</strong>
+            </div>
+            <div className="invoice-detail-card">
+              <span className="invoice-detail-label">Walk-in</span>
+              <strong>{fieldValue(reservation, 'esWalkin') ? 'Si' : 'No'}</strong>
+            </div>
+            <div className="invoice-detail-card md:col-span-2">
+              <span className="invoice-detail-label">Total</span>
+              <strong className="text-2xl text-indigo-600 dark:text-indigo-300">{formatCurrency(fieldValue(reservation, 'totalReserva'), currency)}</strong>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-4">
+            {summaryItems.map(([label, value]) => (
+              <div key={label} className="invoice-detail-card">
+                <span className="invoice-detail-label">{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <section className="mt-6">
+            <h3 className="text-base font-bold text-slate-950 dark:text-white">Habitaciones reservadas</h3>
+            {rooms.length === 0 ? (
+              <p className="mt-3 rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                Esta reserva no incluye habitaciones en la respuesta del backend.
+              </p>
+            ) : (
+              <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    <tr>
+                      <th className="px-4 py-3">Habitacion</th>
+                      <th className="px-4 py-3">Fechas</th>
+                      <th className="px-4 py-3 text-right">Huespedes</th>
+                      <th className="px-4 py-3 text-right">Precio noche</th>
+                      <th className="px-4 py-3 text-right">IVA</th>
+                      <th className="px-4 py-3 text-right">Total</th>
+                      <th className="px-4 py-3">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                    {rooms.map((room, index) => (
+                      <tr key={fieldValue(room, 'idReservaHabitacion', index)} className="bg-white dark:bg-slate-900">
+                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                          {fieldValue(room, 'idHabitacion', fieldValue(room, 'habitacionGuid', 'Sin habitacion'))}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatDate(fieldValue(room, 'fechaInicio'))} - {formatDate(fieldValue(room, 'fechaFin'))}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {fieldValue(room, 'numAdultos', 0)} adultos / {fieldValue(room, 'numNinos', 0)} ninos
+                        </td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(fieldValue(room, 'precioNocheAplicado'), currency)}</td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(fieldValue(room, 'valorIvaLinea'), currency)}</td>
+                        <td className="px-4 py-3 text-right font-bold">{formatCurrency(fieldValue(room, 'totalLinea'), currency)}</td>
+                        <td className="px-4 py-3">{fieldValue(room, 'estadoDetalle', 'N/A')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {fieldValue(reservation, 'observaciones') && (
+            <section className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+              <h3 className="font-bold text-slate-900 dark:text-white">Observaciones</h3>
+              <p className="mt-2">{fieldValue(reservation, 'observaciones')}</p>
+            </section>
+          )}
+
+          {fieldValue(reservation, 'motivoCancelacion') && (
+            <section className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-200">
+              <h3 className="font-bold">Motivo de cancelacion</h3>
+              <p className="mt-2">{fieldValue(reservation, 'motivoCancelacion')}</p>
+            </section>
+          )}
+        </div>
+      </section>
+    </div>
   )
 }
 

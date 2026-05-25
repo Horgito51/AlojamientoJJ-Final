@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { accommodationService } from '../../api/accommodationService'
 import SucursalCard from '../../components/common/SucursalCard'
-import banner from '../../assets/images/banner.png'
 import hotelImg from '../../assets/images/hotelJJ.png'
 import { addDays, getDefaultDateRange, loadStoredSearch, persistSearchState } from '../../utils/accommodation'
 
@@ -66,12 +65,26 @@ export default function PublicHome() {
   return (
     <main className="bg-slate-50 dark:bg-slate-950">
       {/* Hero Section */}
-      <section className="relative h-[600px] w-full overflow-hidden">
-        <img
-          src={banner}
-          alt="Alojamiento JJ Banner"
-          className="absolute inset-0 h-full w-full object-cover brightness-50"
-        />
+      <section className="relative h-[600px] w-full overflow-hidden bg-[#0b1220]">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,#0b1220_0%,#12313a_45%,#3f2f24_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent_0%,rgba(15,23,42,0.78)_100%)]" />
+        <div className="absolute left-0 top-0 h-full w-full opacity-70">
+          <div className="absolute left-[6%] top-[24%] h-64 w-52 rounded-t-[3rem] border border-white/10 bg-white/[0.06] shadow-2xl shadow-black/20" />
+          <div className="absolute left-[18%] top-[18%] h-80 w-64 rounded-t-[3rem] border border-white/10 bg-white/[0.09] shadow-2xl shadow-black/20" />
+          <div className="absolute right-[8%] top-[22%] h-72 w-72 rounded-t-[4rem] border border-white/10 bg-white/[0.08] shadow-2xl shadow-black/20" />
+          <div className="absolute bottom-0 left-0 right-0 h-28 bg-black/20" />
+          <div className="absolute bottom-28 left-[10%] grid grid-cols-4 gap-3">
+            {Array.from({ length: 16 }).map((_, index) => (
+              <span key={index} className="h-7 w-7 rounded-sm bg-amber-200/20" />
+            ))}
+          </div>
+          <div className="absolute bottom-32 right-[12%] grid grid-cols-5 gap-3">
+            {Array.from({ length: 20 }).map((_, index) => (
+              <span key={index} className="h-6 w-8 rounded-sm bg-sky-100/20" />
+            ))}
+          </div>
+        </div>
+        <div className="absolute inset-0 bg-slate-950/35" />
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center text-white sm:px-6 lg:px-8">
           <h1 className="max-w-4xl text-4xl font-extrabold tracking-tight sm:text-6xl">
             Hoteles comodos para cada viaje
