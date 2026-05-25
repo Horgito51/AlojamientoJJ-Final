@@ -2,17 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { accommodationService } from '../../api/accommodationService'
 import SucursalCard from '../../components/common/SucursalCard'
-import { buildSearchParamsFromUrl, getHttpErrorMessage, hydrateSearchDates, loadStoredSearch, persistSearchState } from '../../utils/accommodation'
+import { getHttpErrorMessage, mergeStoredSearchWithUrl, persistSearchState } from '../../utils/accommodation'
 
 const today = new Date().toISOString().slice(0, 10)
 
 export default function AccommodationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initial = useMemo(() => {
-    const fromUrl = buildSearchParamsFromUrl(searchParams)
-    const stored = loadStoredSearch()
-    const merged = { ...stored, ...fromUrl }
-    return hydrateSearchDates(merged)
+    return mergeStoredSearchWithUrl(searchParams)
   }, [searchParams])
   const [form, setForm] = useState(initial)
   const [result, setResult] = useState({ items: [], pagina: 1, totalPaginas: 1, totalResultados: 0 })

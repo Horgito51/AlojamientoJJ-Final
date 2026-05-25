@@ -76,7 +76,10 @@ export const loadStoredSearch = () => {
 
   try {
     const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? parsed : {}
+    if (!parsed || typeof parsed !== 'object') return {}
+    const today = getDefaultDateRange().fechaInicio
+    if (parsed.fechaFin && parsed.fechaFin < today) return {}
+    return parsed
   } catch {
     return {}
   }
@@ -214,6 +217,27 @@ export const buildSearchParamsFromUrl = (searchParams) => ({
   tipoAlojamiento: searchParams.get('tipoAlojamiento') || '',
   categoriaViaje: searchParams.get('categoriaViaje') || '',
 })
+
+export const mergeStoredSearchWithUrl = (searchParams) => {
+  const fromUrl = buildSearchParamsFromUrl(searchParams)
+  const stored = loadStoredSearch()
+  const explicitUrlValues = {}
+
+  Object.entries(fromUrl).forEach(([key, value]) => {
+    if (searchParams.has(key) && value !== undefined && value !== null && value !== '') {
+      explicitUrlValues[key] = value
+    }
+  })
+
+  return hydrateSearchDates({
+    adultos: 2,
+    ninos: 0,
+    habitaciones: 1,
+    pagina: 1,
+    ...stored,
+    ...explicitUrlValues,
+  })
+}
 
 export const toApiDateTime = (dateValue, time = '12:00:00') => {
   if (!dateValue) return ''

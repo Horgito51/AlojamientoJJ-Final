@@ -7,16 +7,14 @@ import {
   CHECKOUT_STORAGE_KEY,
   asArray,
   addDays,
-  buildSearchParamsFromUrl,
   formatMoney,
   getAccommodationImage,
   getAccommodationImages,
   getAccommodationLocation,
   getAccommodationTitle,
-  hydrateSearchDates,
   getNights,
   getHttpErrorMessage,
-  loadStoredSearch,
+  mergeStoredSearchWithUrl,
   persistSearchState,
   getRoomTypeAdults,
   getRoomTypeChildren,
@@ -32,10 +30,7 @@ export default function AccommodationDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const search = useMemo(() => {
-    const fromUrl = buildSearchParamsFromUrl(searchParams)
-    const stored = loadStoredSearch()
-    const merged = { ...stored, ...fromUrl }
-    return hydrateSearchDates(merged)
+    return mergeStoredSearchWithUrl(searchParams)
   }, [searchParams])
   const [detail, setDetail] = useState(null)
   const [reviews, setReviews] = useState([])
