@@ -114,6 +114,10 @@ export const matchesAccommodationDestination = (item, destino = '') => {
 }
 
 export const getAccommodationImage = (item) => {
+  return getAccommodationImages(item)[0]
+}
+
+export const getAccommodationImages = (item) => {
   const imagenes = asArray(getValue(item, ['imagenes', 'Imagenes']))
   const roomImageUrls = new Set(
     getRoomTypes(item)
@@ -139,7 +143,7 @@ export const getAccommodationImage = (item) => {
     ...imagenes.map(getImageUrl),
   ].filter(Boolean)
 
-  return candidates.find((url) => !roomImageUrls.has(url))
+  return Array.from(new Set(candidates.filter((url) => !roomImageUrls.has(url))))
 }
 
 export const getRoomTypes = (detail) =>

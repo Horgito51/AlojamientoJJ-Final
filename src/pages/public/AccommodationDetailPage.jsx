@@ -10,6 +10,7 @@ import {
   buildSearchParamsFromUrl,
   formatMoney,
   getAccommodationImage,
+  getAccommodationImages,
   getAccommodationLocation,
   getAccommodationTitle,
   hydrateSearchDates,
@@ -39,6 +40,7 @@ export default function AccommodationDetailPage() {
   const [detail, setDetail] = useState(null)
   const [reviews, setReviews] = useState([])
   const [selection, setSelection] = useState({})
+  const [galleryIndex, setGalleryIndex] = useState(0)
   const [stayDates, setStayDates] = useState({ fechaInicio: search.fechaInicio, fechaFin: search.fechaFin })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,6 +52,8 @@ export default function AccommodationDetailPage() {
 
   useEffect(() => {
     let alive = true
+
+    setGalleryIndex(0)
 
     Promise.resolve()
       .then(() => {
@@ -175,9 +179,16 @@ export default function AccommodationDetailPage() {
   if (!detail) return <main className="p-8 text-center">Alojamiento no encontrado.</main>
 
   const image = getAccommodationImage(detail)
+  const images = getAccommodationImages(detail)
+  const safeGalleryIndex = images.length > 0 ? Math.min(galleryIndex, images.length - 1) : 0
+  const activeImage = images[safeGalleryIndex] || image
+  const hasGallery = images.length > 1
   const amenities = asArray(getValue(detail, ['amenities', 'Amenities', 'servicios', 'Servicios']))
   const policies = getValue(detail, ['politicas', 'Politicas'], {})
   const policyText = getValue(policies, ['politicas', 'Politicas'])
+
+  const goToPreviousImage = () => setGalleryIndex((current) => (current === 0 ? images.length - 1 : current - 1))
+  const goToNextImage = () => setGalleryIndex((current) => (current + 1) % images.length)
 
   return (
     <main className="bg-slate-50 dark:bg-slate-950">
@@ -188,9 +199,48 @@ export default function AccommodationDetailPage() {
           </Link>
 
           <div className="mt-5 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
-              {image ? (
-                <img src={image} alt={getAccommodationTitle(detail)} className="h-[420px] w-full object-cover" />
+            <div className="relative overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+              {activeImage ? (
+                <>
+                  <img src={activeImage} alt={getAccommodationTitle(detail)} className="h-[420px] w-full object-cover" />
+                  {hasGallery && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={goToPreviousImage}
+                        className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-bold text-slate-800 shadow-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        aria-label="Imagen anterior"
+                      >
+                        &lt;
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goToNextImage}
+                        className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg font-bold text-slate-800 shadow-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        aria-label="Siguiente imagen"
+                      >
+                        &gt;
+                      </button>
+                      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2">
+                        {images.map((item, index) => (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => setGalleryIndex(index)}
+                            className={[
+                              'h-2.5 w-2.5 rounded-full ring-1 ring-white transition',
+                              index === safeGalleryIndex ? 'bg-white' : 'bg-white/45 hover:bg-white/75',
+                            ].join(' ')}
+                            aria-label={`Ver imagen ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="absolute right-4 top-4 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-bold text-white">
+                        {safeGalleryIndex + 1}/{images.length}
+                      </span>
+                    </>
+                  )}
+                </>
               ) : (
                 <div className="flex h-[420px] flex-col items-center justify-center gap-4 text-slate-500">
                   <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
