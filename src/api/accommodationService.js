@@ -4,5 +4,5 @@ export const accommodationService = {
   searchSucursales: (params) => bookingApi.searchAccommodations(params),
   getSucursalDetail: (sucursalGuid, params) => bookingApi.getAccommodation(sucursalGuid, params),
   getSucursalReviews: (sucursalGuid) => bookingApi.getReviews(sucursalGuid),
+  getSucursalReviewsPage: (sucursalGuid, params) => bookingApi.getReviewsPage(sucursalGuid, params),
 }
-

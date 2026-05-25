@@ -85,6 +85,16 @@ export const bookingApi = {
     return normalizeList(data)
   },
 
+  async getReviewsPage(id, params = {}) {
+    const { data } = await api.get(`${ENDPOINTS.PUBLIC.ACCOMMODATIONS}/${id}/reviews`, {
+      params: stripEmpty({
+        pagina: params.pagina || params.Pagina || 1,
+        limite: params.limite || params.Limite || 10,
+      }),
+    })
+    return normalizePagedResponse(data)
+  },
+
   async createPublicReservation(payload) {
     const { data } = await api.post(`${ENDPOINTS.PUBLIC.ACCOMMODATIONS}/reservas`, payload)
     return normalizeEntity(data)

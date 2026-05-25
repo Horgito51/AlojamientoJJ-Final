@@ -25,6 +25,20 @@ import {
   getValue,
 } from '../../utils/accommodation'
 
+const toNumberOrNull = (value) => {
+  if (value === undefined || value === null || value === '') return null
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : null
+}
+
+const getReviewScore = (review) =>
+  toNumberOrNull(getValue(review, ['puntuacion', 'Puntuacion', 'puntuacionGeneral', 'PuntuacionGeneral', 'rating', 'Rating', 'score', 'Score']))
+
+const formatScore = (value) => {
+  const score = toNumberOrNull(value)
+  return score === null ? '-' : score.toFixed(1).replace('.0', '')
+}
+
 export default function AccommodationDetailPage() {
   const { sucursalGuid } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -34,6 +48,7 @@ export default function AccommodationDetailPage() {
   }, [searchParams])
   const [detail, setDetail] = useState(null)
   const [reviews, setReviews] = useState([])
+  const [reviewMeta, setReviewMeta] = useState({ totalResultados: 0 })
   const [selection, setSelection] = useState({})
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [stayDates, setStayDates] = useState({ fechaInicio: search.fechaInicio, fechaFin: search.fechaFin })
@@ -57,14 +72,15 @@ export default function AccommodationDetailPage() {
         setError('')
         return Promise.all([
           accommodationService.getSucursalDetail(sucursalGuid, search),
-          accommodationService.getSucursalReviews(sucursalGuid).catch(() => []),
+          accommodationService.getSucursalReviewsPage(sucursalGuid, { pagina: 1, limite: 10 }).catch(() => ({ items: [], totalResultados: 0 })),
         ])
       })
       .then((response) => {
         if (!alive || !response) return
         const [detailData, reviewData] = response
         setDetail(detailData)
-        setReviews(reviewData)
+        setReviews(asArray(getValue(reviewData, ['items', 'Items'], reviewData)))
+        setReviewMeta(reviewData || { totalResultados: 0 })
       })
       .catch((err) => {
         console.error('Accommodation detail error:', err?.response?.data || err)
@@ -80,6 +96,18 @@ export default function AccommodationDetailPage() {
   }, [sucursalGuid, search])
 
   const roomTypes = useMemo(() => getRoomTypes(detail), [detail])
+  const reviewSummary = useMemo(() => {
+    const detailAverage = toNumberOrNull(getValue(detail, ['promedioValoracion', 'PromedioValoracion', 'promedioGeneral', 'PromedioGeneral']))
+    const metaAverage = toNumberOrNull(getValue(reviewMeta, ['promedioValoracion', 'PromedioValoracion', 'promedioGeneral', 'PromedioGeneral']))
+    const scores = reviews.map(getReviewScore).filter((score) => score !== null)
+    const calculatedAverage = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : null
+    const total = Number(getValue(detail, ['totalValoraciones', 'TotalValoraciones'], getValue(reviewMeta, ['totalResultados', 'TotalResultados'], reviews.length)) || 0)
+
+    return {
+      average: detailAverage ?? metaAverage ?? calculatedAverage,
+      total,
+    }
+  }, [detail, reviewMeta, reviews])
   const nights = getNights(search.fechaInicio, search.fechaFin)
   const selectedRooms = useMemo(() => {
     return roomTypes
@@ -322,16 +350,43 @@ export default function AccommodationDetailPage() {
           </div>
 
           <section className="mt-8">
-            <h2 className="text-2xl font-bold text-slate-950 dark:text-white">Valoraciones</h2>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-950 dark:text-white">Valoraciones</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {reviewSummary.total > 0 ? `${reviewSummary.total} valoraciones publicadas` : 'Aun no hay valoraciones publicadas'}
+                </p>
+              </div>
+              {reviewSummary.average !== null && (
+                <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-right dark:border-indigo-900/60 dark:bg-indigo-950/40">
+                  <p className="text-xs font-bold uppercase text-indigo-600 dark:text-indigo-300">Promedio general</p>
+                  <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-200">{formatScore(reviewSummary.average)}</p>
+                </div>
+              )}
+            </div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {reviews.length === 0 ? (
                 <p className="rounded-lg bg-white p-5 text-slate-500 dark:bg-slate-900">Aun no hay valoraciones disponibles.</p>
-              ) : reviews.map((review, index) => (
-                <article key={getValue(review, ['valoracionGuid', 'idValoracion', 'id'], index)} className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                  <p className="font-bold text-slate-950 dark:text-white">Puntuacion {getValue(review, ['puntuacionGeneral', 'PuntuacionGeneral', 'puntuacionLimpieza'], '-')}</p>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{getValue(review, ['comentarioPositivo', 'comentario', 'Comentario'], 'Sin comentario.')}</p>
-                </article>
-              ))}
+              ) : reviews.map((review, index) => {
+                const score = getReviewScore(review)
+                const positiveComment = getValue(review, ['comentarioPositivo', 'ComentarioPositivo', 'comentario', 'Comentario'])
+                const negativeComment = getValue(review, ['comentarioNegativo', 'ComentarioNegativo'])
+                const customerName = getValue(review, ['nombreVisibleCliente', 'NombreVisibleCliente'])
+
+                return (
+                  <article key={getValue(review, ['valoracionGuid', 'ValoracionGuid', 'idValoracion', 'id'], index)} className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-slate-950 dark:text-white">Puntuacion {formatScore(score)}</p>
+                        {customerName && <p className="mt-1 text-xs text-slate-500">{customerName}</p>}
+                      </div>
+                      {score !== null && <span className="rounded-md bg-indigo-600 px-2.5 py-1 text-sm font-bold text-white">{formatScore(score)}</span>}
+                    </div>
+                    <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{positiveComment || negativeComment || 'Sin comentario.'}</p>
+                    {positiveComment && negativeComment && <p className="mt-2 text-sm text-slate-500">{negativeComment}</p>}
+                  </article>
+                )
+              })}
             </div>
           </section>
         </div>
