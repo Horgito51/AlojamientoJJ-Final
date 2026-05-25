@@ -217,10 +217,13 @@ const imagePayload = (payload) => {
   delete rest.imagenes
   delete rest.Imagenes
 
-  return {
+  const normalizedRest = {
     ...rest,
     imagenes,
   }
+  if (normalizedRest.categoriaViaje === '') normalizedRest.categoriaViaje = null
+
+  return normalizedRest
 }
 
 export const adminModules = {
