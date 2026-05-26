@@ -109,11 +109,12 @@ export default function Register() {
       const authData = data?.data ?? data?.result ?? data
       console.error('Register response:', authData)
 
-      if ((!authData?.accessToken && !authData?.token) || !authData?.idCliente) {
+      const token = authData?.token ?? authData?.Token
+
+      if (!token || !authData?.idCliente) {
         throw new Error('REGISTER_INCOMPLETE')
       }
 
-      const token = authData?.accessToken ?? authData?.token
       const authPayload = {
         email: authData?.correo ?? formData.correo,
         username: authData?.username ?? formData.correo,

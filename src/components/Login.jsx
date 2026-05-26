@@ -95,7 +95,7 @@ export default function Login({ onLoginSuccess }) {
       })
 
       const auth = getAuthPayload(data)
-      const token = pickFirstText(auth?.token, auth?.Token, auth?.accessToken, auth?.AccessToken, auth?.access_token, auth?.jwt)
+      const token = pickFirstText(auth?.token, auth?.Token, auth?.jwt)
 
       if (!token) {
         throw new Error('AUTH_TOKEN_MISSING')
